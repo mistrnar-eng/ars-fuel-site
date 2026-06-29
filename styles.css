@@ -584,6 +584,177 @@ img {
   }
 }
 
+/* Telegram Commands Interface */
+.panel-telegram-commands {
+  background: linear-gradient(135deg, rgba(41, 144, 234, 0.1), rgba(64, 214, 195, 0.1));
+}
+
+.telegram-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: rgba(41, 144, 234, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(41, 144, 234, 0.3);
+}
+
+.info-box {
+  flex: 1;
+}
+
+.info-box strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.info-box code {
+  display: block;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  display: inline-flex;
+}
+
+.commands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.command-card {
+  padding: 14px;
+  background: rgba(64, 214, 195, 0.08);
+  border: 1px solid rgba(64, 214, 195, 0.2);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.command-card:hover {
+  background: rgba(64, 214, 195, 0.12);
+  border-color: rgba(64, 214, 195, 0.4);
+  transform: translateY(-2px);
+}
+
+.command-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.command-card code {
+  display: block;
+  padding: 6px 8px;
+  background: rgba(107, 140, 255, 0.15);
+  border-radius: 6px;
+  color: var(--accent-2);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+.command-card p {
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.telegram-alerts {
+  margin-bottom: 20px;
+  padding: 14px;
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: 12px;
+}
+
+.telegram-alerts h4 {
+  margin: 0 0 12px 0;
+  color: var(--text);
+}
+
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.alert-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.alert-item input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.alert-item span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.telegram-test {
+  padding: 14px;
+  background: rgba(76, 175, 80, 0.08);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 12px;
+}
+
+.telegram-test h4 {
+  margin: 0 0 12px 0;
+  color: var(--text);
+}
+
+.telegram-test input,
+.telegram-test textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(64, 214, 195, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.telegram-test input:focus,
+.telegram-test textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#test-message-status {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
 @keyframes zoomIn {
   from {
     opacity: 0;

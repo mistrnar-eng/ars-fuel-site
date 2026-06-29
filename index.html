@@ -174,6 +174,97 @@
         </p>
       </section>
 
+      <section id="telegram-commands" class="panel panel-telegram-commands">
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">🤖 Telegram Бот - Команди</p>
+            <h3>Управління через чат</h3>
+          </div>
+        </div>
+
+        <div class="telegram-info">
+          <div class="info-box">
+            <strong>📱 ID Бота:</strong>
+            <code id="bot-id-display">Введіть токен спочатку</code>
+          </div>
+          <button class="btn btn-secondary" id="copy-bot-id-btn" type="button">📋 Копіювати ID</button>
+        </div>
+
+        <div class="commands-grid">
+          <div class="command-card">
+            <h4>📊 Статус Станції</h4>
+            <code>/status</code>
+            <p>Показує поточний статус заправки</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/status')">Тест</button>
+          </div>
+
+          <div class="command-card">
+            <h4>💰 Поточні Ціни</h4>
+            <code>/prices</code>
+            <p>Показує ціни на паливо</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/prices')">Тест</button>
+          </div>
+
+          <div class="command-card">
+            <h4>📢 Оголошення</h4>
+            <code>/announce</code>
+            <p>Показує важливі повідомлення</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/announce')">Тест</button>
+          </div>
+
+          <div class="command-card">
+            <h4>⏱️ Час роботи</h4>
+            <code>/hours</code>
+            <p>Показує час роботи</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/hours')">Тест</button>
+          </div>
+
+          <div class="command-card">
+            <h4>📞 Контакти</h4>
+            <code>/contact</code>
+            <p>Показує номер підтримки</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/contact')">Тест</button>
+          </div>
+
+          <div class="command-card">
+            <h4>⚡ Готовність</h4>
+            <code>/readiness</code>
+            <p>Рівень готовності станції</p>
+            <button class="btn btn-sm" onclick="simulateBotCommand('/readiness')">Тест</button>
+          </div>
+        </div>
+
+        <div class="telegram-alerts">
+          <h4>🔔 Автоматичні Оповіщення</h4>
+          <div class="alert-list">
+            <label class="alert-item">
+              <input type="checkbox" id="alert-status-change" checked />
+              <span>Зміна статусу заправки</span>
+            </label>
+            <label class="alert-item">
+              <input type="checkbox" id="alert-price-change" checked />
+              <span>Зміна ціни палива</span>
+            </label>
+            <label class="alert-item">
+              <input type="checkbox" id="alert-readiness-low" checked />
+              <span>Низький рівень готовності</span>
+            </label>
+            <label class="alert-item">
+              <input type="checkbox" id="alert-important-news" checked />
+              <span>Важливі новини</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="telegram-test">
+          <h4>📨 Тестова Розсилка</h4>
+          <input type="text" id="test-chat-id" placeholder="Введіть Telegram Chat ID" />
+          <textarea id="test-message" placeholder="Введіть текст повідомлення" rows="3"></textarea>
+          <button class="btn btn-primary" id="send-test-message-btn" type="button">Надіслати Тестове Повідомлення</button>
+          <p id="test-message-status" class="muted"></p>
+        </div>
+      </section>
+
       <section id="admin" class="panel panel-admin">
         <div class="panel-head compact">
           <div>

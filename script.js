@@ -80,6 +80,37 @@ const staffPanel = document.getElementById('staff-panel');
 const phoneDisplay = document.getElementById('phone-number');
 const readinessDisplay2 = document.getElementById('readiness-level');
 
+// Telegram Bot Commands
+function getBotIdFromToken(token) {
+  if (!token) return 'Не встановлено';
+  return token.split(':')[0];
+}
+
+function generateTelegramResponse(command) {
+  const status = state.stationOpen ? '✅ Відкрито' : '🔴 Зачинено';
+  const responses = {
+    '/status': `📍 **Статус АРС Заправки**\n\n${status}\n\n${state.reason}\n\nРівень готовності: ${state.readinessLevel}%`,
+    '/prices': `💰 **Поточні Ціни**\n\nА95: ${state.prices.a95.toFixed(2)} грн/л\nДизель: ${state.prices.diesel.toFixed(2)} грн/л\nГаз: ${state.prices.gas.toFixed(2)} грн/м³`,
+    '/announce': `📢 **Оголошення**\n\n${state.messages.all}`,
+    '/hours': '🕐 **Час роботи**\n\nПонеділок-Неділя: 24/7',
+    '/contact': `📞 **Служба Підтримки**\n\n${state.phoneNumber}`,
+    '/readiness': `⚡ **Рівень Готовності**\n\n${state.readinessLevel}%\n\n${state.readinessLevel >= 90 ? '✅ Станція готова' : state.readinessLevel >= 70 ? '⚠️ Середній рівень' : '❌ Низький рівень'}`,
+  };
+  return responses[command] || 'Невідома команда. Спробуйте /status';
+}
+
+function simulateBotCommand(command) {
+  const response = generateTelegramResponse(command);
+  showToast(`🤖 Команда: ${command}\n${response}`);
+}
+
+function updateTelegramBotDisplay() {
+  const botIdDisplay = document.getElementById('bot-id-display');
+  if (botIdDisplay && state.telegramToken) {
+    botIdDisplay.textContent = `Bot ID: ${getBotIdFromToken(state.telegramToken)}`;
+  }
+}
+
 function render() {
   const isAdmin = state.role === 'admin';
   const isStaff = state.role === 'staff' || isAdmin;
@@ -147,6 +178,8 @@ function render() {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  updateTelegramBotDisplay();
 }
 
 function showToast(message) {
@@ -308,6 +341,71 @@ syncBotBtn.addEventListener('click', () => {
     showToast('Спочатку встановіть токен бота в адмін-панелі');
   }
 });
+
+// Telegram Bot Interface Event Listeners
+const copyBotIdBtn = document.getElementById('copy-bot-id-btn');
+if (copyBotIdBtn) {
+  copyBotIdBtn.addEventListener('click', () => {
+    const botId = getBotIdFromToken(state.telegramToken);
+    if (botId !== 'Не встановлено') {
+      navigator.clipboard.writeText(botId).then(() => {
+        showToast(`✅ Bot ID скопійовано: ${botId}`);
+      });
+    } else {
+      showToast('⚠️ Токен не встановлено. Встановіть його в адмін-панелі');
+    }
+  });
+}
+
+// Alert checkboxes - enable/disable notifications
+const alertCheckboxes = document.querySelectorAll('.alert-item input[type="checkbox"]');
+alertCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    const alertType = checkbox.id;
+    const isEnabled = checkbox.checked;
+    showToast(`${isEnabled ? '🔔' : '🔕'} ${alertType.replace('alert-', '').replace(/-/g, ' ')} - ${isEnabled ? 'включено' : 'вимкнено'}`);
+  });
+});
+
+// Test Message Sender
+const sendTestMessageBtn = document.getElementById('send-test-message-btn');
+if (sendTestMessageBtn) {
+  sendTestMessageBtn.addEventListener('click', () => {
+    const chatId = document.getElementById('test-chat-id').value.trim();
+    const message = document.getElementById('test-message').value.trim();
+    const statusDisplay = document.getElementById('test-message-status');
+
+    if (!chatId) {
+      statusDisplay.textContent = '❌ Введіть Chat ID';
+      statusDisplay.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!message) {
+      statusDisplay.textContent = '❌ Введіть текст повідомлення';
+      statusDisplay.style.color = 'var(--danger)';
+      return;
+    }
+
+    if (!state.telegramToken) {
+      statusDisplay.textContent = '❌ Токен бота не встановлено';
+      statusDisplay.style.color = 'var(--danger)';
+      return;
+    }
+
+    // Simulate sending
+    statusDisplay.textContent = '📨 Надсилання повідомлення...';
+    statusDisplay.style.color = 'var(--muted)';
+
+    setTimeout(() => {
+      statusDisplay.textContent = '✅ Тестове повідомлення надіслано! (это демо-режим)';
+      statusDisplay.style.color = 'var(--accent)';
+      showToast(`📨 Повідомлення надіслано в чат ${chatId}`);
+      document.getElementById('test-chat-id').value = '';
+      document.getElementById('test-message').value = '';
+    }, 1000);
+  });
+}
 
 render();
 setInterval(() => render(), 60000);
