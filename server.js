@@ -56,6 +56,28 @@ async function handleUpdate(u) {
         if (sub.isAdmin) buttons.push([{ text: '🔐 Адмін меню', callback_data: '/admin' }]);
         await telegramApi('sendMessage', { chat_id: chat, text: '<b>👋 Привіт!</b> Я бот АРС.', parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
       }
+      // simple command handlers
+      if (m.text && m.text.trim() === '/status') {
+        const text = generateTelegramResponseForCommand('status');
+        await telegramApi('sendMessage', { chat_id: chat, text });
+      }
+      if (m.text && m.text.trim() === '/prices') {
+        const text = generateTelegramResponseForCommand('prices');
+        await telegramApi('sendMessage', { chat_id: chat, text });
+      }
+      if (m.text && m.text.trim() === '/subscribe') {
+        if (!state.subscribers) state.subscribers = [];
+        if (!state.subscribers.find((s) => String(s.chat_id) === String(chat))) {
+          state.subscribers.push({ chat_id: chat, name: m.from?.username || m.from?.first_name, topics: [] });
+          saveState(state);
+        }
+        await telegramApi('sendMessage', { chat_id: chat, text: 'Ви підписані на розсилки.' });
+      }
+      if (m.text && m.text.trim() === '/unsubscribe') {
+        state.subscribers = (state.subscribers || []).filter((s) => String(s.chat_id) !== String(chat));
+        saveState(state);
+        await telegramApi('sendMessage', { chat_id: chat, text: 'Ви відписані від розсилок.' });
+      }
     }
 
     if (u.callback_query) {
@@ -87,10 +109,72 @@ async function handleUpdate(u) {
         return;
       }
 
+      if (data === '/status' || data === '/prices' || data === '/hours' || data === '/readiness' || data === '/contact') {
+        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
+        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+        const respText = generateTelegramResponseForCommand(data.replace('/',''));
+        await telegramApi('sendMessage', { chat_id: chat, text: respText, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/back' }]] } });
+        return;
+      }
+
+      // fallback for other callbacks: echo intent
+      if (data) {
+        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
+        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+        const respText = generateTelegramResponseForCommand(data.replace('/',''));
+        await telegramApi('sendMessage', { chat_id: chat, text: respText, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/back' }]] } });
+        return;
+      }
+
       if (data === '/back') {
         try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
         await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
-        await telegramApi('sendMessage', { chat_id: chat, text: '<b>👋 Привіт!</b> Я бот АРС.', parse_mode: 'HTML' });
+        // send greeting with keyboard
+        const st = state.station || {};
+        const buttons = [
+          [{ text: 'Стан', callback_data: '/status' }, { text: 'Ціни', callback_data: '/prices' }, { text: 'Графік', callback_data: '/hours' }],
+        ];
+        buttons.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
+        const text = `<b>👋 Привіт!</b> Я бот АРС.`;
+        await telegramApi('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
+        return;
+
+        // expose state so admin UI can update server-side station state
+        app.get('/state', (req,res) => res.json({ state: state.station || {} }));
+        app.post('/state', (req,res) => {
+          state.station = req.body || {};
+          saveState(state);
+          res.json({ ok: true });
+        });
+      }
+      
+      // admin menu
+      if (data === '/admin') {
+        const sub = state.subscribers.find(s => String(s.chat_id) === String(chat));
+        if (!sub || !sub.isAdmin) {
+          await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу', show_alert: true });
+          return;
+        }
+        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
+        const adminKb = [
+          [{ text: '🔁 Статус → розсилка', callback_data: '/admin_broadcast_status' }, { text: '💰 Ціни → розсилка', callback_data: '/admin_broadcast_prices' }],
+          [{ text: '📢 Оголошення → розсилка', callback_data: '/admin_broadcast_announcement' }],
+          [{ text: '⬅️ Назад', callback_data: '/back' }]
+        ];
+        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+        await telegramApi('sendMessage', { chat_id: chat, text: 'Адмін меню', reply_markup: { inline_keyboard: adminKb } });
+        return;
+      }
+
+      // admin actions
+      if (data === '/admin_broadcast_prices' || data === '/admin_broadcast_announcement' || data === '/admin_broadcast_status') {
+        const sub = state.subscribers.find(s => String(s.chat_id) === String(chat));
+        if (!sub || !sub.isAdmin) { await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text:'Немає доступу', show_alert:true }); return; }
+        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+        const topic = data.includes('prices') ? 'prices' : data.includes('announcement') ? 'announcement' : 'status';
+        broadcastToSubscribers(topic);
+        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
+        await telegramApi('sendMessage', { chat_id: chat, text: `Розсилка ${topic} розпочата`, reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/admin' }]] } });
         return;
       }
     }
@@ -122,9 +206,11 @@ async function broadcastToSubscribers(topic) {
 }
 
 function buildBroadcastText(topic) {
-  if (topic === 'status') return `Стан: ${process.env.STATION_STATUS || '---'}`;
-  if (topic === 'prices') return `Ціни оновлені.`;
-  if (topic === 'announcement') return `Оголошення: ${process.env.ANNOUNCEMENT || ''}`;
+  const st = getStationState();
+  if (topic === 'status') return `${st.name}: ${st.open ? 'Відкрито' : 'Зачинено'} ${st.reason ? '— ' + st.reason : ''}`;
+  if (topic === 'prices') return `Ціни: А95 ${Number(st.prices.a95).toFixed(2)} грн/л, ДП ${Number(st.prices.diesel).toFixed(2)} грн/л, Газ ${Number(st.prices.gas).toFixed(2)} грн/м³`;
+  if (topic === 'announcement') return `Оголошення: ${st.messages.all || ''}`;
+  if (topic === 'readiness') return `Рівень готовності: ${st.readiness}%`;
   return `Оновлення: ${topic}`;
 }
 
@@ -146,6 +232,14 @@ app.post('/promote', (req,res)=>{
   if (!sub) return res.status(404).json({ error: 'not found' });
   sub.isAdmin = !sub.isAdmin; saveState(state);
   res.json({ ok: true, isAdmin: sub.isAdmin });
+});
+
+app.post('/remove_subscriber', (req,res) => {
+  const { chat_id } = req.body;
+  const before = (state.subscribers || []).length;
+  state.subscribers = (state.subscribers || []).filter(s => String(s.chat_id) !== String(chat_id));
+  saveState(state);
+  res.json({ ok: true, removed: before - state.subscribers.length });
 });
 
 app.post('/broadcast', async (req,res)=>{

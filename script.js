@@ -119,6 +119,32 @@ function t(key) {
 
 let state = loadState();
 
+// try to sync initial state from server if available
+async function fetchServerState() {
+  try {
+    const sres = await fetch('/state');
+    if (sres.ok) {
+      const json = await sres.json();
+      const st = json.state || {};
+      // apply server station fields to local state
+      if (typeof st.open !== 'undefined') state.stationOpen = st.open;
+      if (st.name) state.stationName = st.name;
+      if (st.reason) state.reason = st.reason;
+      if (st.prices) state.prices = { ...state.prices, ...st.prices };
+      if (st.messages) state.messages = { ...state.messages, ...st.messages };
+      if (typeof st.readiness !== 'undefined') state.readinessLevel = st.readiness;
+      if (st.phone) state.phoneNumber = st.phone;
+    }
+  } catch (e) {}
+  try {
+    const r = await fetch('/subscribers');
+    if (r.ok) {
+      const json = await r.json();
+      if (Array.isArray(json.subscribers)) state.subscribers = json.subscribers;
+    }
+  } catch (e) {}
+}
+
 // Modal elements
 const loginModalBtn = document.getElementById('login-modal-btn');
 const loginModal = document.getElementById('login-modal');
@@ -272,19 +298,29 @@ function renderSubscribers() {
       const chat = btn.dataset.chat;
       const sub = state.subscribers.find((x) => String(x.chat_id) === String(chat));
       if (!sub) return;
-      sub.isAdmin = !sub.isAdmin;
-      saveState();
-      renderSubscribers();
-      showToast(sub.isAdmin ? 'Підписник став адміном бота' : 'Адмін права знято');
+      // request server to toggle promote
+      fetch('/promote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chat }) })
+        .then((r) => r.json()).then((j) => {
+          if (j && j.ok) {
+            sub.isAdmin = !!j.isAdmin;
+            saveState(); renderSubscribers();
+            showToast(sub.isAdmin ? 'Підписник став адміном бота' : 'Адмін права знято');
+          }
+        }).catch(() => { showToast('Не вдалося оновити на сервері'); });
     });
   });
 
   subscriberList.querySelectorAll('.remove-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const chat = btn.dataset.chat;
-      state.subscribers = (state.subscribers || []).filter((x) => String(x.chat_id) !== String(chat));
-      saveState();
-      renderSubscribers();
+      // request server to remove subscriber
+      fetch('/remove_subscriber', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chat }) })
+        .then((r) => r.json()).then((j) => {
+          state.subscribers = (state.subscribers || []).filter((x) => String(x.chat_id) !== String(chat));
+          saveState(); renderSubscribers();
+        }).catch(() => {
+          showToast('Не вдалося видалити підписника на сервері');
+        });
     });
   });
 }
@@ -815,6 +851,20 @@ sectionToggleInputs.forEach((toggle) => {
 saveBtn.addEventListener('click', () => {
   saveState();
   showToast('Зміни збережено');
+  // push state to server so bot and site stay synchronized
+  try {
+    const payload = {
+      name: state.stationName,
+      open: state.stationOpen,
+      reason: state.reason,
+      prices: state.prices,
+      messages: state.messages,
+      readiness: state.readinessLevel,
+      phone: state.phoneNumber,
+      hours: state.hours || ''
+    };
+    fetch('/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+  } catch (e) {}
 });
 
 syncBotBtn.addEventListener('click', () => {
@@ -1223,10 +1273,13 @@ async function broadcastToSubscribers(topic) {
 }
 
 // start polling if token exists on load
-if (state.telegramToken) startTelegramPolling();
-// start UI and realtime loop
-render();
-startRealtimeUpdates();
+// Initialize: fetch server state, then start polling and UI
+(async function init() {
+  await fetchServerState();
+  if (state.telegramToken) startTelegramPolling();
+  render();
+  startRealtimeUpdates();
+})();
 
 // Wire admin broadcast controls
 if (broadcastSendBtn) {
