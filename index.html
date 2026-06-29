@@ -36,11 +36,6 @@
           <a id="nav-admin" href="#admin" data-i18n="navAdmin">Управління</a>
           <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
         </nav>
-        <div class="language-selector" id="language-selector">
-          <button class="lang-button active" data-lang="uk">🇺🇦 Укр</button>
-          <button class="lang-button" data-lang="en">🇬🇧 Eng</button>
-          <button class="lang-button" data-lang="de">🇩🇪 De</button>
-        </div>
       </div>
     </header>
 
@@ -96,12 +91,12 @@
         <article class="panel panel-main">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Ключовий статус</p>
+              <p class="eyebrow" data-i18n="statusEyebrow">Ключовий статус</p>
               <h3 id="station-state-title">Заправка відкрита</h3>
             </div>
-            <span class="status-pill status-pill-active" id="station-state-pill">Відкрито</span>
+            <span class="status-pill status-pill-active" id="station-state-pill" data-i18n="stationStatePill">Відкрито</span>
           </div>
-          <p id="station-reason" class="lead">
+          <p id="station-reason" class="lead" data-i18n="stationReason">
             Всі колонки працюють. Очікуйте мінімальний час обслуговування.
           </p>
           <div class="info-strip">
@@ -122,9 +117,9 @@
         </article>
 
         <article class="panel panel-tall">
-          <p class="eyebrow">Оголошення для всіх</p>
+          <p class="eyebrow" data-i18n="announcementEyebrow">Оголошення для всіх</p>
           <h3 id="all-message">Приємної дороги та безпечного заправлення.</h3>
-          <p class="muted">
+          <p class="muted" data-i18n="announcementMuted">
             Усі відвідувачі бачать актуальні новини станції та важливі оновлення без зайвих дій.
           </p>
         </article>
@@ -134,8 +129,8 @@
         <article class="panel">
           <div class="panel-head compact">
             <div>
-              <p class="eyebrow">Актуальні ціни</p>
-              <h3>Паливо та газ</h3>
+              <p class="eyebrow" data-i18n="pricesEyebrow">Актуальні ціни</p>
+              <h3 data-i18n="pricesHeading">Паливо та газ</h3>
             </div>
           </div>
           <div class="price-list">
@@ -157,8 +152,8 @@
         <article class="panel" id="staff-panel" hidden>
           <div class="panel-head compact">
             <div>
-              <p class="eyebrow">Для персоналу</p>
-              <h3>Внутрішні повідомлення</h3>
+              <p class="eyebrow" data-i18n="staffEyebrow">Для персоналу</p>
+              <h3 data-i18n="staffHeading">Внутрішні повідомлення</h3>
             </div>
           </div>
           <p id="staff-message" class="lead">Перевірте готовність колонок до ранкової зміни.</p>
@@ -172,8 +167,8 @@
         <article class="panel">
           <div class="panel-head compact">
             <div>
-              <p class="eyebrow">Оплата</p>
-              <h3>Методи оплати</h3>
+              <p class="eyebrow" data-i18n="paymentsEyebrow">Оплата</p>
+              <h3 data-i18n="paymentsHeading">Методи оплати</h3>
             </div>
           </div>
           <div id="payment-options-list" class="info-list"></div>
@@ -181,8 +176,8 @@
         <article class="panel">
           <div class="panel-head compact">
             <div>
-              <p class="eyebrow">Штрафи</p>
-              <h3>Правила і санкції</h3>
+              <p class="eyebrow" data-i18n="finesEyebrow">Штрафи</p>
+              <h3 data-i18n="finesHeading">Правила і санкції</h3>
             </div>
           </div>
           <div id="fine-list-display" class="info-list"></div>
@@ -193,8 +188,8 @@
         <article class="panel">
           <div class="panel-head compact">
             <div>
-              <p class="eyebrow">Медіа</p>
-              <h3>Фото та відео АРС</h3>
+              <p class="eyebrow" data-i18n="mediaEyebrow">Медіа</p>
+              <h3 data-i18n="mediaHeading">Фото та відео АРС</h3>
             </div>
           </div>
           <div class="media-grid" id="media-gallery"></div>
@@ -204,10 +199,10 @@
       <section id="telegram" class="panel panel-telegram">
         <div class="panel-head compact">
           <div>
-            <p class="eyebrow">Telegram-бот</p>
-            <h3>Автоматичні сповіщення про стан</h3>
+            <p class="eyebrow" data-i18n="telegramEyebrow">Telegram-бот</p>
+            <h3 data-i18n="telegramHeading">Автоматичні сповіщення про стан</h3>
           </div>
-          <button class="btn btn-primary" id="sync-bot-btn" type="button">Синхронізувати</button>
+          <button class="btn btn-primary" id="sync-bot-btn" type="button" data-i18n="syncBotButton">Синхронізувати</button>
         </div>
         <p class="muted">
           Бот може повідомляти клієнтів і персонал про відкриття, закриття, зміну цін або оголошень.
@@ -215,54 +210,6 @@
         </p>
       </section>
 
-      <section id="telegram-commands" class="panel panel-telegram-commands">
-        <div class="panel-head compact">
-          <div>
-            <p class="eyebrow" data-i18n="telegramCommandsEyebrow">🤖 Telegram Бот - Команди</p>
-            <h3 data-i18n="telegramCommandsHeading">Управління через чат</h3>
-          </div>
-        </div>
-
-        <div class="telegram-info">
-          <div class="info-box">
-            <strong data-i18n="botIdLabel">📱 ID Бота:</strong>
-            <code id="bot-id-display">Введіть токен спочатку</code>
-          </div>
-          <button class="btn btn-secondary" id="copy-bot-id-btn" type="button" data-i18n="copyBotId">📋 Копіювати ID</button>
-        </div>
-
-        <div id="commands-grid" class="commands-grid"></div>
-
-        <div class="telegram-alerts">
-          <h4>🔔 Автоматичні Оповіщення</h4>
-          <div class="alert-list">
-            <label class="alert-item">
-              <input type="checkbox" id="alert-status-change" checked />
-              <span>Зміна статусу заправки</span>
-            </label>
-            <label class="alert-item">
-              <input type="checkbox" id="alert-price-change" checked />
-              <span>Зміна ціни палива</span>
-            </label>
-            <label class="alert-item">
-              <input type="checkbox" id="alert-readiness-low" checked />
-              <span>Низький рівень готовності</span>
-            </label>
-            <label class="alert-item">
-              <input type="checkbox" id="alert-important-news" checked />
-              <span>Важливі новини</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="telegram-test">
-          <h4>📨 Тестова Розсилка</h4>
-          <input type="text" id="test-chat-id" placeholder="Введіть Telegram Chat ID" data-i18n-placeholder="chatIdPlaceholder" />
-          <textarea id="test-message" placeholder="Введіть текст повідомлення" rows="3" data-i18n-placeholder="messagePlaceholder"></textarea>
-          <button class="btn btn-primary" id="send-test-message-btn" type="button">Надіслати Тестове Повідомлення</button>
-          <p id="test-message-status" class="muted"></p>
-        </div>
-      </section>
 
       <section id="admin" class="panel panel-admin">
         <div class="panel-head compact">
@@ -342,6 +289,11 @@
               <input id="price-gas-input" type="number" step="0.01" />
             </label>
 
+            <label>
+              <span data-i18n="telegramTokenLabel">Telegram токен</span>
+              <input id="telegram-token-input" type="text" placeholder="Введіть токен бота" data-i18n-placeholder="telegramTokenPlaceholder" />
+            </label>
+
             <div class="multi-row">
               <label>
                 <span>Оплата</span>
@@ -379,35 +331,35 @@
             </div>
 
             <div class="bot-button-manager">
-              <h4>Кнопки Telegram бота</h4>
+              <h4 data-i18n="botButtonManagerHeading">Кнопки Telegram бота</h4>
               <div id="bot-button-list"></div>
-              <button class="btn btn-secondary" id="add-bot-button-btn" type="button">Додати кнопку</button>
+              <button class="btn btn-secondary" id="add-bot-button-btn" type="button" data-i18n="addButtonLabel">Додати кнопку</button>
             </div>
 
             <div class="user-management">
-              <h4>Керування обліковими записами</h4>
+              <h4 data-i18n="userManagementHeading">Керування обліковими записами</h4>
               <label>
-                <span>Логін адміністратора</span>
+                <span data-i18n="adminLoginLabel">Логін адміністратора</span>
                 <input id="admin-username-input" type="text" />
               </label>
               <label>
-                <span>Пароль адміністратора</span>
+                <span data-i18n="adminPasswordLabel">Пароль адміністратора</span>
                 <input id="admin-password-input" type="password" />
               </label>
               <div class="staff-management">
-                <h5>Співробітники</h5>
+                <h5 data-i18n="staffManagementHeading">Співробітники</h5>
                 <div id="staff-list"></div>
-                <button class="btn btn-secondary" id="add-staff-btn" type="button">Додати співробітника</button>
+                <button class="btn btn-secondary" id="add-staff-btn" type="button" data-i18n="addStaffBtn">Додати співробітника</button>
               </div>
               <div class="online-users">
-                <h5>Хто зараз на сайті</h5>
+                <h5 data-i18n="onlineUsersHeading">Хто зараз на сайті</h5>
                 <div id="online-users-list"></div>
               </div>
             </div>
 
             <button class="btn btn-secondary" id="download-bot-config-btn" type="button" data-i18n="downloadButton">Завантажити конфігурацію бота</button>
             <button class="btn btn-primary" id="save-btn" type="button" data-i18n="saveButton">Зберегти зміни</button>
-            <button class="btn btn-secondary" id="logout-btn" type="button">Вийти</button>
+            <button class="btn btn-secondary" id="logout-btn" type="button" data-i18n="logoutButton">Вийти</button>
           </div>
         </div>
       </section>
