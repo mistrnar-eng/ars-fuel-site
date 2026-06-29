@@ -569,6 +569,12 @@ telegramTokenInput.addEventListener('input', () => {
   saveState();
 });
 
+// Start/stop polling when token is changed
+telegramTokenInput.addEventListener('change', () => {
+  if (state.telegramToken) startTelegramPolling();
+  else stopTelegramPolling();
+});
+
 statusSelect.addEventListener('change', () => {
   state.stationOpen = statusSelect.value === 'open';
   saveState();
@@ -767,5 +773,77 @@ if (telegramSendBtn) {
     setTimeout(() => appendMessage('bot', 'Привіт!'), 400);
   });
 }
+
+// --- Telegram API polling (best-effort from browser) ---
+async function telegramApi(method, params = {}) {
+  const token = state.telegramToken;
+  if (!token) throw new Error('no-token');
+  const url = `https://api.telegram.org/bot${token}/${method}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return res.json();
+}
+
+async function pollTelegramOnce() {
+  if (!state.telegramToken) {
+    if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: не підключено';
+    return;
+  }
+
+  if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: підключається...';
+
+  try {
+    const resp = await telegramApi('getUpdates', { offset: telegramOffset, timeout: 0 });
+    if (!resp || !resp.ok) {
+      if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: помилка API';
+      return;
+    }
+
+    if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: підключено';
+
+    for (const update of resp.result || []) {
+      telegramOffset = update.update_id + 1;
+      // handle direct /start message
+      if (update.message && update.message.text && update.message.text.trim() === '/start') {
+        const chatId = update.message.chat.id;
+        // send greeting
+        try {
+          await telegramApi('sendMessage', { chat_id: chatId, text: 'Привіт!' });
+          console.log('Sent greeting to', chatId);
+        } catch (sendErr) {
+          console.warn('Send message failed', sendErr);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Telegram polling error', err);
+    if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: не вдалося зʼєднатись з API (CORS або мережа)';
+    showToast('Не вдалося підключитися до Telegram API з браузера; потрібен серверний проксі.');
+    stopTelegramPolling();
+  }
+}
+
+function startTelegramPolling() {
+  stopTelegramPolling();
+  if (!state.telegramToken) return;
+  telegramOffset = 0;
+  // run immediately and then interval
+  pollTelegramOnce();
+  telegramPollIntervalId = setInterval(pollTelegramOnce, 3500);
+}
+
+function stopTelegramPolling() {
+  if (telegramPollIntervalId) {
+    clearInterval(telegramPollIntervalId);
+    telegramPollIntervalId = null;
+  }
+  if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: не підключено';
+}
+
+// start polling if token exists on load
+if (state.telegramToken) startTelegramPolling();
 render();
 setInterval(() => render(), 60000);
