@@ -180,6 +180,12 @@ const notifTelegramGreeting = document.getElementById('notif-telegram-greeting')
 const notifStatusChange = document.getElementById('notif-status-change');
 const notifPriceChange = document.getElementById('notif-price-change');
 const notifAnnouncement = document.getElementById('notif-announcement');
+const adminBotSettings = document.getElementById('admin-bot-settings');
+const broadcastTopicSelect = document.getElementById('broadcast-topic-select');
+const broadcastSendBtn = document.getElementById('broadcast-send-btn');
+const broadcastText = document.getElementById('broadcast-text');
+const subscriberList = document.getElementById('subscriber-list');
+const refreshSubsBtn = document.getElementById('refresh-subs-btn');
 
 let realtimeIntervalId = null;
 
@@ -230,6 +236,31 @@ function updateTelegramBotDisplay() {
   if (botIdDisplay) {
     botIdDisplay.textContent = state.telegramToken ? `Bot ID: ${getBotIdFromToken(state.telegramToken)}` : 'Введіть токен спочатку';
   }
+}
+
+// Subscribers stored in state for demo (chat_ids)
+if (!state.subscribers) state.subscribers = [];
+
+function renderSubscribers() {
+  if (!subscriberList) return;
+  subscriberList.innerHTML = '';
+  (state.subscribers || []).forEach((s) => {
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = 'space-between';
+    row.style.padding = '6px 8px';
+    row.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+    row.innerHTML = `<span style="color:var(--muted)">${s.chat_id} (${s.name||'User'})</span><button class="btn btn-secondary" data-chat="${s.chat_id}">Видалити</button>`;
+    subscriberList.appendChild(row);
+  });
+  subscriberList.querySelectorAll('button[data-chat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chat = btn.dataset.chat;
+      state.subscribers = (state.subscribers || []).filter((x) => String(x.chat_id) !== String(chat));
+      saveState();
+      renderSubscribers();
+    });
+  });
 }
 
 
@@ -881,6 +912,27 @@ async function pollTelegramOnce() {
         continue;
       }
 
+      // also handle simple subscription commands (/subscribe, /unsubscribe)
+      if (update.message && update.message.text) {
+        const txt = update.message.text.trim();
+        const chatId = update.message.chat.id;
+        if (txt === '/subscribe') {
+          if (!state.subscribers) state.subscribers = [];
+          if (!state.subscribers.find((s) => String(s.chat_id) === String(chatId))) {
+            state.subscribers.push({ chat_id: chatId, name: update.message.from?.username || update.message.from?.first_name });
+            saveState();
+            renderSubscribers();
+          }
+          await telegramApi('sendMessage', { chat_id: chatId, text: 'Ви підписані на розсилки.' });
+        }
+        if (txt === '/unsubscribe') {
+          state.subscribers = (state.subscribers || []).filter((s) => String(s.chat_id) !== String(chatId));
+          saveState();
+          renderSubscribers();
+          await telegramApi('sendMessage', { chat_id: chatId, text: 'Ви відписані від розсилок.' });
+        }
+      }
+
       // handle direct /start message
       if (update.message && update.message.text && update.message.text.trim() === '/start') {
         const chatId = update.message.chat.id;
@@ -889,12 +941,20 @@ async function pollTelegramOnce() {
           continue;
         }
 
+        // add subscriber if new
+        if (!state.subscribers) state.subscribers = [];
+        if (!state.subscribers.find((s) => String(s.chat_id) === String(chatId))) {
+          state.subscribers.push({ chat_id: chatId, name: update.message.from?.username || update.message.from?.first_name });
+          saveState();
+          renderSubscribers();
+        }
+
         // build inline keyboard from botButtons
         const keyboard = (state.botButtons || []).map((b) => [{ text: b.label, callback_data: b.command }]);
         try {
           await telegramApi('sendMessage', {
             chat_id: chatId,
-            text: 'Привіт! Оберіть опцію:',
+            text: '👋 Привіт! Я бот АРС — оберіть одну з опцій або підпишіться на розсилки:',
             reply_markup: { inline_keyboard: keyboard },
           });
           console.log('Sent greeting with keyboard to', chatId);
@@ -928,8 +988,47 @@ function stopTelegramPolling() {
   if (telegramConnectionStatus) telegramConnectionStatus.textContent = 'Статус бота: не підключено';
 }
 
+// Admin broadcast: build text from topic
+function buildBroadcastText(topic) {
+  if (broadcastText && broadcastText.value && broadcastText.value.trim()) return broadcastText.value.trim();
+  if (topic === 'status') return `${state.stationName}: ${state.stationOpen ? 'Відкрито' : 'Зачинено'} — ${state.reason}`;
+  if (topic === 'prices') return `Ціни: А95 ${state.prices.a95.toFixed(2)} грн/л, ДП ${state.prices.diesel.toFixed(2)} грн/л, Газ ${state.prices.gas.toFixed(2)} грн/м³`;
+  if (topic === 'announcement') return `Оголошення: ${state.messages.all}`;
+  return 'Оновлення від АРС';
+}
+
+async function broadcastToSubscribers(topic) {
+  const text = buildBroadcastText(topic);
+  const subs = state.subscribers || [];
+  if (!state.telegramToken) return showToast('Спочатку встановіть токен бота');
+  if (!subs.length) return showToast('Немає підписників');
+  showToast(`Розсилка ${subs.length}…`);
+  for (const s of subs) {
+    try {
+      await telegramApi('sendMessage', { chat_id: s.chat_id, text });
+    } catch (e) {
+      console.warn('Broadcast failed for', s.chat_id, e);
+    }
+  }
+  showToast('Розсилка завершена');
+}
+
 // start polling if token exists on load
 if (state.telegramToken) startTelegramPolling();
 // start UI and realtime loop
 render();
 startRealtimeUpdates();
+
+// Wire admin broadcast controls
+if (broadcastSendBtn) {
+  broadcastSendBtn.addEventListener('click', () => {
+    const topic = broadcastTopicSelect?.value || 'status';
+    broadcastToSubscribers(topic);
+  });
+}
+
+if (refreshSubsBtn) {
+  refreshSubsBtn.addEventListener('click', () => renderSubscribers());
+}
+
+// When polling receives /start, add subscriber if not exists

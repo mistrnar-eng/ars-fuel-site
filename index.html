@@ -377,6 +377,31 @@
             <button class="btn btn-secondary" id="download-bot-config-btn" type="button" data-i18n="downloadButton">Завантажити конфігурацію бота</button>
             <button class="btn btn-primary" id="save-btn" type="button" data-i18n="saveButton">Зберегти зміни</button>
             <button class="btn btn-secondary" id="logout-btn" type="button" data-i18n="logoutButton">Вийти</button>
+            <hr style="margin:16px 0; border-color: rgba(255,255,255,0.04)" />
+            <div id="admin-bot-settings" style="margin-top:12px">
+              <h4>Налаштування бота та розсилок</h4>
+              <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
+                <label style="flex:1">Поточний Bot ID: <span id="bot-id-display">Не встановлено</span></label>
+                <button class="btn btn-secondary" id="refresh-subs-btn" type="button">Оновити підписки</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
+                <label style="flex:1">Розсилка по темі:</label>
+                <select id="broadcast-topic-select">
+                  <option value="status">Статус</option>
+                  <option value="prices">Ціни</option>
+                  <option value="announcement">Оголошення</option>
+                </select>
+                <button class="btn btn-primary" id="broadcast-send-btn" type="button">Надіслати всім підписаним</button>
+              </div>
+              <div style="margin-top:8px">
+                <label><small>Текст для розсилки (якщо порожньо — буде згенеровано автоматично)</small></label>
+                <textarea id="broadcast-text" rows="3" style="width:100%"></textarea>
+              </div>
+              <div style="margin-top:12px">
+                <h5>Підписники</h5>
+                <div id="subscriber-list" style="max-height:160px;overflow:auto;border-radius:8px;padding:8px;background:rgba(255,255,255,0.03)"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
