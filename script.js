@@ -186,8 +186,18 @@ const broadcastSendBtn = document.getElementById('broadcast-send-btn');
 const broadcastText = document.getElementById('broadcast-text');
 const subscriberList = document.getElementById('subscriber-list');
 const refreshSubsBtn = document.getElementById('refresh-subs-btn');
+const settingsLoginAdminBtn = document.getElementById('settings-login-admin');
+const settingsLoginStaffBtn = document.getElementById('settings-login-staff');
 
 let realtimeIntervalId = null;
+let priceBroadcastTimeout = null;
+
+function schedulePriceBroadcast() {
+  if (priceBroadcastTimeout) clearTimeout(priceBroadcastTimeout);
+  priceBroadcastTimeout = setTimeout(() => {
+    if (state.notificationsEnabled.priceChange) broadcastToSubscribers('prices');
+  }, 1400);
+}
 
 // Info display elements
 const staffPanel = document.getElementById('staff-panel');
@@ -250,13 +260,26 @@ function renderSubscribers() {
     row.style.justifyContent = 'space-between';
     row.style.padding = '6px 8px';
     row.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
-    row.innerHTML = `<span style="color:var(--muted)">${s.chat_id} (${s.name||'User'})</span><button class="btn btn-secondary" data-chat="${s.chat_id}">Видалити</button>`;
-    // show subscribed topics
     const topicsText = (s.topics && s.topics.length) ? ` — ${s.topics.join(', ')}` : '';
+    row.innerHTML = `<span style="color:var(--muted)"></span><div style="display:flex;gap:6px"><button class="btn btn-secondary promote-btn" data-chat="${s.chat_id}">${s.isAdmin ? 'Зняти адмін' : 'Промотувати'}</button><button class="btn btn-secondary remove-btn" data-chat="${s.chat_id}">Видалити</button></div>`;
     row.firstChild.textContent = `${s.chat_id} (${s.name||'User'})${topicsText}`;
     subscriberList.appendChild(row);
   });
-  subscriberList.querySelectorAll('button[data-chat]').forEach((btn) => {
+
+  // wire promote and remove buttons
+  subscriberList.querySelectorAll('.promote-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chat = btn.dataset.chat;
+      const sub = state.subscribers.find((x) => String(x.chat_id) === String(chat));
+      if (!sub) return;
+      sub.isAdmin = !sub.isAdmin;
+      saveState();
+      renderSubscribers();
+      showToast(sub.isAdmin ? 'Підписник став адміном бота' : 'Адмін права знято');
+    });
+  });
+
+  subscriberList.querySelectorAll('.remove-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const chat = btn.dataset.chat;
       state.subscribers = (state.subscribers || []).filter((x) => String(x.chat_id) !== String(chat));
@@ -521,6 +544,7 @@ function render() {
     renderBotButtons();
     renderStaffAccounts();
     renderOnlineUsers();
+    renderSubscribers();
   }
 
 
@@ -625,6 +649,7 @@ readinessInput.addEventListener('input', () => {
   readinessDisplay.textContent = state.readinessLevel;
   saveState();
   render();
+  if (state.notificationsEnabled.statusChange) broadcastToSubscribers('readiness');
 });
 
 telegramTokenInput.addEventListener('input', () => {
@@ -642,6 +667,9 @@ statusSelect.addEventListener('change', () => {
   state.stationOpen = statusSelect.value === 'open';
   saveState();
   render();
+  if (state.notificationsEnabled.statusChange) {
+    broadcastToSubscribers('status');
+  }
 });
 
 statusReason.addEventListener('input', () => {
@@ -661,24 +689,28 @@ a95Input.addEventListener('input', () => {
   state.prices.a95 = Number(a95Input.value);
   saveState();
   render();
+  schedulePriceBroadcast();
 });
 
 dieselInput.addEventListener('input', () => {
   state.prices.diesel = Number(dieselInput.value);
   saveState();
   render();
+  schedulePriceBroadcast();
 });
 
 gasInput.addEventListener('input', () => {
   state.prices.gas = Number(gasInput.value);
   saveState();
   render();
+  schedulePriceBroadcast();
 });
 
 allMessageInput.addEventListener('input', () => {
   state.messages.all = allMessageInput.value;
   saveState();
   render();
+  if (state.notificationsEnabled.announcement) broadcastToSubscribers('announcement');
 });
 
 staffMessageInput.addEventListener('input', () => {
@@ -923,6 +955,10 @@ async function pollTelegramOnce() {
                 topics[i + 1] ? { text: topics[i + 1].label, callback_data: `/topic_${topics[i + 1].key}` } : { text: ' ', callback_data: '/noop' },
               ]);
             }
+            // delete previous menu message to keep chat clean
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            // add back button row
+            kb.push([{ text: '⬅️ Назад', callback_data: '/back' }]);
             await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
             await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: 'Налаштування розсилок — оберіть теми, на які хочете підписатися або відписатися:', reply_markup: { inline_keyboard: kb } });
             continue;
@@ -951,11 +987,106 @@ async function pollTelegramOnce() {
             continue;
           }
 
-          // default acknowledge
+          if (data === '/back') {
+            // delete current menu and send greeting again
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            // send greeting again
+            const buttons = (state.botButtons || []).map((b) => ({ text: b.label, callback_data: b.command }));
+            const keyboardMain = [];
+            for (let i = 0; i < buttons.length; i += 3) keyboardMain.push(buttons.slice(i, i + 3).map((btn) => ({ text: btn.text, callback_data: btn.callback_data })));
+            keyboardMain.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: '<b>👋 Вітаємо на АРС!</b>\n\nЯ допоможу дізнатися актуальний стан, ціни та отримувати розсилки.\nОберіть опцію нижче або натисніть «⚙️ Налаштування», щоб керувати підписками.', parse_mode: 'HTML', reply_markup: { inline_keyboard: keyboardMain } });
+            continue;
+          }
+
+          // admin menu handling
+          if (data === '/admin') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            const sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub || !sub.isAdmin) {
+              await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу: потрібно бути адміном бота', show_alert: true });
+              continue;
+            }
+            // delete previous menu
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            const adminKb = [
+              [{ text: '🔁 Перемкнути статус', callback_data: '/admin_toggle_status' }, { text: '💰 Розсилка цін', callback_data: '/admin_broadcast_prices' }],
+              [{ text: '📢 Розсилка оголошення', callback_data: '/admin_broadcast_announcement' }, { text: '🔄 Оновити підписників', callback_data: '/admin_refresh' }],
+              [{ text: sub.isAdmin ? '🔒 Зняти себе як адмін' : '⭐ Промотувати себе адміном', callback_data: '/admin_promote_self' }],
+              [{ text: '⬅️ Назад', callback_data: '/back' }],
+            ];
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: 'Адмін меню — виберіть дію:', reply_markup: { inline_keyboard: adminKb } });
+            continue;
+          }
+
+          // admin actions
+          if (data === '/admin_toggle_status') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            const sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub || !sub.isAdmin) { await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу', show_alert: true }); continue; }
+            // toggle status
+            state.stationOpen = !state.stationOpen;
+            saveState(); render();
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: `Статус змінено: ${state.stationOpen ? 'Відкрито' : 'Зачинено'}`, reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/admin' }]] } });
+            if (state.notificationsEnabled.statusChange) broadcastToSubscribers('status');
+            continue;
+          }
+
+          if (data === '/admin_broadcast_prices') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            const sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub || !sub.isAdmin) { await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу', show_alert: true }); continue; }
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            broadcastToSubscribers('prices');
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: 'Розсилка цін запущена', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/admin' }]] } });
+            continue;
+          }
+
+          if (data === '/admin_broadcast_announcement') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            const sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub || !sub.isAdmin) { await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу', show_alert: true }); continue; }
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            broadcastToSubscribers('announcement');
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: 'Розсилка оголошень запущена', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/admin' }]] } });
+            continue;
+          }
+
+          if (data === '/admin_refresh') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            const sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub || !sub.isAdmin) { await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: 'Немає доступу', show_alert: true }); continue; }
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            const count = (state.subscribers || []).length;
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: `Кількість підписників: ${count}`, reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/admin' }]] } });
+            continue;
+          }
+
+          if (data === '/admin_promote_self') {
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            let sub = (state.subscribers || []).find((s) => String(s.chat_id) === String(chat));
+            if (!sub) { sub = { chat_id: chat, name: cb.from?.username || cb.from?.first_name, topics: [], isAdmin: true }; state.subscribers.push(sub); }
+            else sub.isAdmin = !sub.isAdmin;
+            saveState(); renderSubscribers();
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: sub.isAdmin ? 'Ви маєте права адміна бота' : 'Права адміна знято', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/back' }]] } });
+            continue;
+          }
+
+          // default acknowledge and replace previous message
+          try { await telegramApi('deleteMessage', { chat_id: msgChatId || fromId, message_id: cb.message.message_id }); } catch(e){}
           await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: `Обрано: ${data}`, show_alert: false });
-          // send response message
+          // send response message with back button
           const respText = generateTelegramResponse(data);
-          await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: respText, parse_mode: 'HTML' });
+          await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: respText, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/back' }]] } });
         } catch (e) {
           console.warn('Callback handling failed', e);
         }
@@ -1007,6 +1138,11 @@ async function pollTelegramOnce() {
         }
         // add separate settings button as its own centered row
         keyboard.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
+        // add admin menu button if this user is a promoted admin
+        try {
+          const subCheck = state.subscribers.find((s) => String(s.chat_id) === String(chatId));
+          if (subCheck && subCheck.isAdmin) keyboard.push([{ text: '🔐 Адмін меню', callback_data: '/admin' }]);
+        } catch (e) {}
         try {
           await telegramApi('sendMessage', {
             chat_id: chatId,
@@ -1051,6 +1187,9 @@ function buildBroadcastText(topic) {
   if (topic === 'status') return `${state.stationName}: ${state.stationOpen ? 'Відкрито' : 'Зачинено'} — ${state.reason}`;
   if (topic === 'prices') return `Ціни: А95 ${state.prices.a95.toFixed(2)} грн/л, ДП ${state.prices.diesel.toFixed(2)} грн/л, Газ ${state.prices.gas.toFixed(2)} грн/м³`;
   if (topic === 'announcement') return `Оголошення: ${state.messages.all}`;
+  if (topic === 'readiness') return `Рівень готовності: ${state.readinessLevel}%`;
+  if (topic === 'contact') return `Служба підтримки: ${state.phoneNumber}`;
+  if (topic === 'hours') return `Час роботи: Понеділок-Неділя: 24/7`;
   return 'Оновлення від АРС';
 }
 
@@ -1058,9 +1197,11 @@ async function broadcastToSubscribers(topic) {
   const text = buildBroadcastText(topic);
   const subs = state.subscribers || [];
   if (!state.telegramToken) return showToast('Спочатку встановіть токен бота');
-  if (!subs.length) return showToast('Немає підписників');
-  showToast(`Розсилка ${subs.length}…`);
-  for (const s of subs) {
+  // only send to subscribers who have this topic in their topics array
+  const targets = (subs || []).filter((s) => Array.isArray(s.topics) && s.topics.includes(topic));
+  if (!targets.length) return showToast('Немає підписників для цієї теми');
+  showToast(`Розсилка ${targets.length}…`);
+  for (const s of targets) {
     try {
       await telegramApi('sendMessage', { chat_id: s.chat_id, text });
     } catch (e) {
@@ -1086,6 +1227,28 @@ if (broadcastSendBtn) {
 
 if (refreshSubsBtn) {
   refreshSubsBtn.addEventListener('click', () => renderSubscribers());
+}
+
+if (settingsLoginAdminBtn) {
+  settingsLoginAdminBtn.addEventListener('click', () => {
+    const username = window.prompt('Логін адміністратора:')?.trim();
+    const password = window.prompt('Пароль адміністратора:')?.trim();
+    if (!username || !password) return showToast('Введіть логін і пароль');
+    if (username === state.adminAccount.username && password === state.adminAccount.password) {
+      state.role = 'admin'; saveState(); render(); showToast('Увійшли як адміністратор');
+    } else showToast('Невірний логін або пароль');
+  });
+}
+
+if (settingsLoginStaffBtn) {
+  settingsLoginStaffBtn.addEventListener('click', () => {
+    const username = window.prompt('Логін співробітника:')?.trim();
+    const password = window.prompt('Пароль співробітника:')?.trim();
+    if (!username || !password) return showToast('Введіть логін і пароль');
+    const staffMatch = state.staffAccounts.some((a) => a.username === username && a.password === password);
+    if (staffMatch) { state.role = 'staff'; saveState(); render(); showToast('Увійшли як співробітник'); }
+    else showToast('Невірний логін або пароль');
+  });
 }
 
 // When polling receives /start, add subscriber if not exists
