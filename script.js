@@ -1195,8 +1195,19 @@ function buildBroadcastText(topic) {
 
 async function broadcastToSubscribers(topic) {
   const text = buildBroadcastText(topic);
+  // try server-side broadcast if server is hosting the bot
+  try {
+    const res = await fetch('/broadcast', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic }) });
+    if (res.ok) {
+      showToast('Розсилка ініційована на сервері');
+      return;
+    }
+  } catch (e) {
+    // server not available — fallback to client-side bot
+  }
+
   const subs = state.subscribers || [];
-  if (!state.telegramToken) return showToast('Спочатку встановіть токен бота');
+  if (!state.telegramToken) return showToast('Спочатку встановіть токен бота або розгорніть сервер');
   // only send to subscribers who have this topic in their topics array
   const targets = (subs || []).filter((s) => Array.isArray(s.topics) && s.topics.includes(topic));
   if (!targets.length) return showToast('Немає підписників для цієї теми');

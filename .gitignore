@@ -1,0 +1,7 @@
+node_modules/
+telegram_token.txt
+server_state.json
+.env
+npm-debug.log*
+dist/
+*.log

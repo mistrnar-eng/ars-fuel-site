@@ -1,3 +1,33 @@
+# ARS Fuel Site - Server
+
+This repository contains the static site and a simple Node.js Express server which:
+
+- Serves the static files (`index.html`, `script.js`, `styles.css`).
+- Runs a long-running Telegram bot via server-side polling so it stays online when your computer is off.
+- Exposes simple endpoints to list subscribers and trigger broadcasts.
+
+Quick start (recommended on a VPS or cloud host):
+
+1. Install Node.js (v16+).
+2. Copy your Telegram bot token into `telegram_token.txt` in the project root, or set `TELEGRAM_TOKEN` as an environment variable.
+3. Install deps and start:
+
+```powershell
+npm install
+npm start
+```
+
+The app serves the site on port `3000` by default. Set `PORT` env var to change.
+
+Endpoints:
+- `GET /health` — health check.
+- `GET /subscribers` — list subscribers known by server bot.
+- `POST /broadcast` — JSON `{ "topic": "prices" }` to broadcast to subscribers of that topic.
+- `POST /promote` — JSON `{ "chat_id": 123 }` toggle promote a subscriber.
+
+Deployment tips:
+- Use a process manager (PM2, systemd) to keep the server running and restart on crash.
+- For HTTPS (recommended if exposing webhooks), use a reverse proxy like Nginx or a platform that provides HTTPS.
 # 🚀 АРС — Сучасна Заправка
 
 Модерний веб-сайт для управління заправною станцією з системою ролей, логіном та інтеграцією Telegram-бота.
