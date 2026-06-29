@@ -555,12 +555,9 @@ function logout() {
 }
 
 // Modal event listeners
+// Always open the login modal from the top button (single entry point)
 loginModalBtn.addEventListener('click', () => {
-  if (state.role === 'guest') {
-    openModal();
-  } else {
-    closeModal();
-  }
+  openModal();
 });
 
 modalCloseBtn.addEventListener('click', closeModal);
