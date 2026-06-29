@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>АРС — сучасна заправка</title>
+    <meta
+      name="description"
+      content="Сучасний сайт для заправки АРС з анімаціями, статусом роботи, ролями доступу та інтеграцією з Telegram ботом."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-orb orb-one"></div>
+    <div class="background-orb orb-two"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#home">
+        <span class="brand-mark">A</span>
+        <span>
+          <strong>АРС</strong>
+          <small>Заправка нового рівня</small>
+        </span>
+      </a>
+      <nav class="topnav">
+        <a href="#status">Статус</a>
+        <a href="#prices">Ціни</a>
+        <a href="#telegram">Telegram</a>
+        <a href="#admin">Управління</a>
+        <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
+      </nav>
+    </header>
+
+    <main id="home" class="hero-shell">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <p class="eyebrow">Преміальна заправка для дороги й бізнесу</p>
+          <h1>Швидка заправка, чиста сервісна зона та прозорий режим роботи.</h1>
+          <p class="hero-text">
+            Сайт АРС дає змогу бачити актуальний стан роботи, цінники, повідомлення для всіх
+            та персоналу, а також швидко змінювати параметри через адміністративну панель.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#status">Переглянути статус</a>
+            <a class="btn btn-secondary" href="#admin">Відкрити панель</a>
+          </div>
+          <div class="hero-badges">
+            <span>24/7</span>
+            <span>Авто-сканери</span>
+            <span>Telegram-бот</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="fuel-card">
+            <div class="fuel-card-top">
+              <span class="status-pill" id="hero-status-pill">Відкрито</span>
+              <span class="dot pulse"></span>
+            </div>
+            <h2>Станція готова до роботи</h2>
+            <div class="stat-grid">
+              <div>
+                <small>Колонки</small>
+                <strong id="hero-pumps">8</strong>
+              </div>
+              <div>
+                <small>А95</small>
+                <strong id="hero-a95">54.20</strong>
+              </div>
+              <div>
+                <small>ДП</small>
+                <strong id="hero-diesel">49.60</strong>
+              </div>
+              <div>
+                <small>Газ</small>
+                <strong id="hero-gas">28.50</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="status" class="panel-grid">
+        <article class="panel panel-main">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Ключовий статус</p>
+              <h3 id="station-state-title">Заправка відкрита</h3>
+            </div>
+            <span class="status-pill status-pill-active" id="station-state-pill">Відкрито</span>
+          </div>
+          <p id="station-reason" class="lead">
+            Всі колонки працюють. Очікуйте мінімальний час обслуговування.
+          </p>
+          <div class="info-strip">
+            <div>
+              <small>Рівень готовності</small>
+              <strong id="readiness-level">98%</strong>
+            </div>
+            <div>
+              <small>Поточний час</small>
+              <strong id="current-time">—</strong>
+            </div>
+            <div>
+              <small>Служба підтримки</small>
+              <strong id="phone-number">+38 (099) 123-45-67</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel panel-tall">
+          <p class="eyebrow">Оголошення для всіх</p>
+          <h3 id="all-message">Приємної дороги та безпечного заправлення.</h3>
+          <p class="muted">
+            Усі відвідувачі бачать актуальні новини станції та важливі оновлення без зайвих дій.
+          </p>
+        </article>
+      </section>
+
+      <section id="prices" class="panel-grid two-up">
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Актуальні ціни</p>
+              <h3>Паливо та газ</h3>
+            </div>
+          </div>
+          <div class="price-list">
+            <div class="price-item">
+              <span>А95</span>
+              <strong id="price-a95">54.20 грн/л</strong>
+            </div>
+            <div class="price-item">
+              <span>Дизель</span>
+              <strong id="price-diesel">49.60 грн/л</strong>
+            </div>
+            <div class="price-item">
+              <span>Газ</span>
+              <strong id="price-gas">28.50 грн/м³</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel" id="staff-panel" hidden>
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Для персоналу</p>
+              <h3>Внутрішні повідомлення</h3>
+            </div>
+          </div>
+          <p id="staff-message" class="lead">Перевірте готовність колонок до ранкової зміни.</p>
+          <p class="muted">
+            Це повідомлення видно тільки співробітникам, які увійшли як staff.
+          </p>
+        </article>
+      </section>
+
+      <section id="telegram" class="panel panel-telegram">
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">Telegram-бот</p>
+            <h3>Автоматичні сповіщення про стан</h3>
+          </div>
+          <button class="btn btn-primary" id="sync-bot-btn" type="button">Синхронізувати</button>
+        </div>
+        <p class="muted">
+          Бот може повідомляти клієнтів і персонал про відкриття, закриття, зміну цін або оголошень.
+          У цій демо-версії кнопка показує, як буде працювати інтеграція.
+        </p>
+      </section>
+
+      <section id="admin" class="panel panel-admin">
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">Система доступу</p>
+            <h3>Інформація про роль</h3>
+          </div>
+        </div>
+
+        <div class="access-grid">
+          <div class="access-card">
+            <h4 id="role-title">Поточна роль: Гість</h4>
+            <p id="role-description">
+              Гість бачить статус, ціни та загальні повідомлення без доступу до змін.
+            </p>
+            <p id="current-user" style="color: var(--muted); font-size: 0.9rem;">Ви не авторизовані</p>
+            <button class="btn btn-secondary" id="logout-link-btn" type="button" style="display: none;">Вийти</button>
+          </div>
+
+          <div class="access-card" id="admin-panel" hidden>
+            <h4>Панель адміністратора</h4>
+            <label>
+              <span>Номер телефону служби підтримки</span>
+              <input id="phone-input" type="tel" placeholder="+38 (099) 123-45-67" />
+            </label>
+
+            <label>
+              <span>Рівень готовності (%)</span>
+              <input id="readiness-input" type="range" min="0" max="100" step="1" />
+              <strong id="readiness-display">98</strong>%
+            </label>
+
+            <label>
+              <span>Статус заправки</span>
+              <select id="status-select">
+                <option value="open">Відкрита</option>
+                <option value="closed">Зачинена</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Причина</span>
+              <textarea id="status-reason" rows="3" placeholder="Наприклад: технічне обслуговування"></textarea>
+            </label>
+
+            <label>
+              <span>Кількість колонок</span>
+              <input id="pumps-input" type="range" min="2" max="16" step="1" />
+              <strong id="pumps-value">8</strong>
+            </label>
+
+            <label>
+              <span>А95, грн/л</span>
+              <input id="price-a95-input" type="number" step="0.01" />
+            </label>
+
+            <label>
+              <span>Дизель, грн/л</span>
+              <input id="price-diesel-input" type="number" step="0.01" />
+            </label>
+
+            <label>
+              <span>Газ, грн/м³</span>
+              <input id="price-gas-input" type="number" step="0.01" />
+            </label>
+
+            <label>
+              <span>Токен Telegram бота</span>
+              <input id="telegram-token-input" type="text" placeholder="Введіть ваш токен бота" />
+              <small style="color: var(--muted);">Бот використовуватиме цей токен для надсилання повідомлень</small>
+            </label>
+
+            <label>
+              <span>Повідомлення для всіх</span>
+              <textarea id="all-message-input" rows="3"></textarea>
+            </label>
+
+            <label>
+              <span>Повідомлення для співробітників</span>
+              <textarea id="staff-message-input" rows="3"></textarea>
+            </label>
+
+            <button class="btn btn-primary" id="save-btn" type="button">Зберегти зміни</button>
+            <button class="btn btn-secondary" id="logout-btn" type="button">Вийти</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Login Modal -->
+      <div id="login-modal" class="modal" hidden>
+        <div class="modal-content">
+          <button class="modal-close" id="modal-close-btn" type="button">✕</button>
+          <h2>Вхід до системи</h2>
+          <label>
+            <span>Роль</span>
+            <select id="modal-role-select">
+              <option value="staff">Співробітник</option>
+              <option value="admin">Адміністратор</option>
+            </select>
+          </label>
+          <label>
+            <span>Логін</span>
+            <input id="modal-login-input" type="text" placeholder="Введіть логін" />
+          </label>
+          <label>
+            <span>Пароль</span>
+            <input id="modal-password-input" type="password" placeholder="Введіть пароль" />
+          </label>
+          <button class="btn btn-primary" id="modal-login-btn" type="button">Увійти</button>
+          <p id="modal-error" class="modal-error" style="display: none; color: var(--danger);"></p>
+        </div>
+      </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "ars-fuel-site",
+  "version": "1.0.0",
+  "description": "Сучасна заправка АРС - система управління заправною станцією",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "http-server -p 8000 -c-1"
+  },
+  "keywords": [
+    "fuel-station",
+    "management",
+    "telegram-bot"
+  ],
+  "author": "АРС Заправка",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
