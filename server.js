@@ -2,8 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const fetch = require('node-fetch');
+const http = require('http');
+const WebSocket = require('ws');
 
 const STATE_FILE = path.join(__dirname, 'server_state.json');
+let wss;
 
 function loadState() {
   try {
@@ -15,9 +18,25 @@ function loadState() {
 
 function saveState(s) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(s, null, 2), 'utf8');
+  if (wss) broadcastStateUpdate();
+}
+
+function getStationState() {
+  return state.station || {
+    name: 'АРС',
+    open: true,
+    reason: 'Всі колонки працюють. Очікуйте мінімальний час обслуговування.',
+    prices: { a95: 54.2, diesel: 49.6, gas: 28.5 },
+    messages: { all: 'Приємної дороги та безпечного заправлення.' },
+    readiness: 98,
+    phone: '+38 (099) 123-45-67',
+    hours: 'Пн-Нд 24/7',
+  };
 }
 
 const state = loadState();
+state.station = state.station || getStationState();
+state.subscribers = state.subscribers || [];
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || (fs.existsSync(path.join(__dirname, 'telegram_token.txt')) ? fs.readFileSync(path.join(__dirname, 'telegram_token.txt'),'utf8').trim() : null);
 if (!TELEGRAM_TOKEN) console.warn('No TELEGRAM_TOKEN set; bot will not start until token provided as env or telegram_token.txt');
@@ -138,14 +157,6 @@ async function handleUpdate(u) {
         const text = `<b>👋 Привіт!</b> Я бот АРС.`;
         await telegramApi('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
         return;
-
-        // expose state so admin UI can update server-side station state
-        app.get('/state', (req,res) => res.json({ state: state.station || {} }));
-        app.post('/state', (req,res) => {
-          state.station = req.body || {};
-          saveState(state);
-          res.json({ ok: true });
-        });
       }
       
       // admin menu
@@ -226,6 +237,31 @@ app.get('/health', (req,res)=> res.json({ ok: true }));
 
 app.get('/subscribers', (req,res)=> res.json({ subscribers: state.subscribers }));
 
+app.get('/state', (req,res)=> res.json({ state: state.station || getStationState() }));
+app.post('/state', (req,res)=>{
+  const newStation = req.body || {};
+  const oldStation = state.station || {};
+  state.station = { ...oldStation, ...newStation };
+  saveState(state);
+
+  try {
+    if (JSON.stringify(oldStation.prices || {}) !== JSON.stringify(state.station.prices || {})) {
+      console.log('Prices changed on server — broadcasting prices');
+      broadcastToSubscribers('prices');
+    }
+    if ((oldStation.open !== state.station.open) && typeof state.station.open !== 'undefined') {
+      console.log('Status changed on server — broadcasting status');
+      broadcastToSubscribers('status');
+    }
+    if ((oldStation.messages || {}).all !== (state.station.messages || {}).all) {
+      console.log('Announcement changed on server — broadcasting announcement');
+      broadcastToSubscribers('announcement');
+    }
+  } catch (e) { console.warn('Broadcast on state change failed', e); }
+
+  res.json({ ok: true });
+});
+
 app.post('/promote', (req,res)=>{
   const { chat_id } = req.body;
   const sub = state.subscribers.find(s=>String(s.chat_id)===String(chat_id));
@@ -250,5 +286,22 @@ app.post('/broadcast', async (req,res)=>{
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=> console.log('Server running on', PORT));
+const server = http.createServer(app);
+
+wss = new WebSocket.Server({ server });
+wss.on('connection', (ws) => {
+  ws.send(JSON.stringify({ type: 'state', payload: { state: state.station || getStationState(), subscribers: state.subscribers || [] } }));
+});
+
+function broadcastStateUpdate() {
+  if (!wss) return;
+  const payload = JSON.stringify({ type: 'state', payload: { state: state.station || getStationState(), subscribers: state.subscribers || [] } });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  });
+}
+
+server.listen(PORT, ()=> console.log('Server running on', PORT));
 console.log('Server setup complete');

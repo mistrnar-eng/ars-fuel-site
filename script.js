@@ -120,29 +120,107 @@ function t(key) {
 let state = loadState();
 
 // try to sync initial state from server if available
+let ws = null;
+let websocketConnected = false;
+let websocketReconnectTimeout = null;
+let serverStateInterval = null;
+
+function applyServerState(serverState) {
+  if (!serverState) return;
+  const st = serverState;
+  if (typeof st.open !== 'undefined') state.stationOpen = st.open;
+  if (st.name) state.stationName = st.name;
+  if (st.reason) state.reason = st.reason;
+  if (st.prices) state.prices = { ...state.prices, ...st.prices };
+  if (st.messages) state.messages = { ...state.messages, ...st.messages };
+  if (typeof st.readiness !== 'undefined') state.readinessLevel = st.readiness;
+  if (st.phone) state.phoneNumber = st.phone;
+  if (st.hours) state.hours = st.hours;
+  saveState();
+}
+
 async function fetchServerState() {
   try {
     const sres = await fetch('/state');
     if (sres.ok) {
       const json = await sres.json();
-      const st = json.state || {};
-      // apply server station fields to local state
-      if (typeof st.open !== 'undefined') state.stationOpen = st.open;
-      if (st.name) state.stationName = st.name;
-      if (st.reason) state.reason = st.reason;
-      if (st.prices) state.prices = { ...state.prices, ...st.prices };
-      if (st.messages) state.messages = { ...state.messages, ...st.messages };
-      if (typeof st.readiness !== 'undefined') state.readinessLevel = st.readiness;
-      if (st.phone) state.phoneNumber = st.phone;
+      applyServerState(json.state || {});
     }
   } catch (e) {}
   try {
     const r = await fetch('/subscribers');
     if (r.ok) {
       const json = await r.json();
-      if (Array.isArray(json.subscribers)) state.subscribers = json.subscribers;
+      if (Array.isArray(json.subscribers)) {
+        state.subscribers = json.subscribers;
+        saveState();
+      }
     }
   } catch (e) {}
+}
+
+function startServerStatePolling() {
+  if (websocketConnected) return;
+  if (serverStateInterval) clearInterval(serverStateInterval);
+  serverStateInterval = setInterval(async () => {
+    try {
+      await fetchServerState();
+      render();
+    } catch (e) {}
+  }, 5000);
+}
+
+function stopServerStatePolling() {
+  if (serverStateInterval) {
+    clearInterval(serverStateInterval);
+    serverStateInterval = null;
+  }
+}
+
+function connectWebSocket() {
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+  const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+  ws = new WebSocket(url);
+
+  ws.addEventListener('open', () => {
+    websocketConnected = true;
+    stopServerStatePolling();
+    if (websocketReconnectTimeout) {
+      clearTimeout(websocketReconnectTimeout);
+      websocketReconnectTimeout = null;
+    }
+    console.log('WebSocket connected to server');
+  });
+
+  ws.addEventListener('message', (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'state' && msg.payload) {
+        if (msg.payload.state) applyServerState(msg.payload.state);
+        if (Array.isArray(msg.payload.subscribers)) state.subscribers = msg.payload.subscribers;
+        render();
+      }
+    } catch (e) {
+      console.warn('Invalid WebSocket message', e);
+    }
+  });
+
+  ws.addEventListener('close', () => {
+    websocketConnected = false;
+    console.log('WebSocket disconnected; falling back to polling');
+    startServerStatePolling();
+    if (!websocketReconnectTimeout) {
+      websocketReconnectTimeout = setTimeout(connectWebSocket, 3000);
+    }
+  });
+
+  ws.addEventListener('error', (err) => {
+    console.warn('WebSocket error', err);
+    ws.close();
+  });
 }
 
 // Modal elements
@@ -1273,12 +1351,14 @@ async function broadcastToSubscribers(topic) {
 }
 
 // start polling if token exists on load
-// Initialize: fetch server state, then start polling and UI
+// Initialize: fetch server state, then connect to websocket and UI
 (async function init() {
   await fetchServerState();
+  connectWebSocket();
   if (state.telegramToken) startTelegramPolling();
   render();
   startRealtimeUpdates();
+  startServerStatePolling();
 })();
 
 // Wire admin broadcast controls
