@@ -28,6 +28,24 @@ Endpoints:
 Deployment tips:
 - Use a process manager (PM2, systemd) to keep the server running and restart on crash.
 - For HTTPS (recommended if exposing webhooks), use a reverse proxy like Nginx or a platform that provides HTTPS.
+
+Windows background service (runs on startup)
+- Option A (recommended): Run the PowerShell installer as Administrator — it will create a Scheduled Task that runs `node server.js` on system startup and logs to `server.log`:
+
+```powershell
+# run from project folder as Admin
+PowerShell -ExecutionPolicy Bypass -File .\install-windows-service.ps1
+```
+
+- Option B: use the included `run-server.bat` to start the server minimized now:
+
+```powershell
+.\run-server.bat
+```
+
+Notes:
+- The scheduled task approach keeps the bot running after reboots and when no browser is open.
+- Ensure `telegram_token.txt` is present and Node.js is installed and in PATH.
 # 🚀 АРС — Сучасна Заправка
 
 Модерний веб-сайт для управління заправною станцією з системою ролей, логіном та інтеграцією Telegram-бота.
