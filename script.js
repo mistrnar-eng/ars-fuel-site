@@ -176,11 +176,6 @@ const brandName = document.getElementById('brand-name');
 const sectionToggleInputs = document.querySelectorAll('.section-toggle');
 
 // New UI elements
-const languageSelect = document.getElementById('language-select');
-const quickUsernameInput = document.getElementById('quick-username-input');
-const quickPasswordInput = document.getElementById('quick-password-input');
-const quickLoginBtn = document.getElementById('quick-login-btn');
-const quickLogoutBtn = document.getElementById('quick-logout-btn');
 const notifTelegramGreeting = document.getElementById('notif-telegram-greeting');
 const notifStatusChange = document.getElementById('notif-status-change');
 const notifPriceChange = document.getElementById('notif-price-change');
@@ -766,43 +761,6 @@ syncBotBtn.addEventListener('click', () => {
     showToast('Спочатку встановіть токен бота в адмін-панелі');
   }
 });
-
-// Quick login from settings
-if (quickLoginBtn) {
-  quickLoginBtn.addEventListener('click', () => {
-    const username = (quickUsernameInput?.value || '').trim();
-    const password = (quickPasswordInput?.value || '').trim();
-    if (!username || !password) return showToast('Введіть логін і пароль');
-    if (username === state.adminAccount.username && password === state.adminAccount.password) {
-      state.role = 'admin';
-      saveState();
-      render();
-      showToast('Увійшли як адміністратор');
-      return;
-    }
-    const staffMatch = state.staffAccounts.some((a) => a.username === username && a.password === password);
-    if (staffMatch) {
-      state.role = 'staff';
-      saveState();
-      render();
-      showToast('Увійшли як співробітник');
-      return;
-    }
-    showToast('Невірний логін або пароль');
-  });
-}
-
-if (quickLogoutBtn) quickLogoutBtn.addEventListener('click', () => { state.role = 'guest'; saveState(); render(); showToast('Ви вийшли'); });
-
-// Language selector
-if (languageSelect) {
-  languageSelect.value = state.language || 'uk';
-  languageSelect.addEventListener('change', () => {
-    state.language = languageSelect.value;
-    saveState();
-    render();
-  });
-}
 
 // Notification toggles
 if (notifTelegramGreeting) notifTelegramGreeting.checked = !!state.notificationsEnabled.telegramGreeting;
