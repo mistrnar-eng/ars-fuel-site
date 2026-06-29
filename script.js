@@ -251,6 +251,9 @@ function renderSubscribers() {
     row.style.padding = '6px 8px';
     row.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
     row.innerHTML = `<span style="color:var(--muted)">${s.chat_id} (${s.name||'User'})</span><button class="btn btn-secondary" data-chat="${s.chat_id}">Видалити</button>`;
+    // show subscribed topics
+    const topicsText = (s.topics && s.topics.length) ? ` — ${s.topics.join(', ')}` : '';
+    row.firstChild.textContent = `${s.chat_id} (${s.name||'User'})${topicsText}`;
     subscriberList.appendChild(row);
   });
   subscriberList.querySelectorAll('button[data-chat]').forEach((btn) => {
@@ -902,6 +905,53 @@ async function pollTelegramOnce() {
           const fromId = cb.from?.id;
           const msgChatId = cb.message?.chat?.id;
           // acknowledge callback
+          // handle settings and topic toggles specially
+          if (data === '/settings') {
+            // build settings keyboard: 2 columns x 3 rows (6 topics)
+            const topics = [
+              { key: 'status', label: 'Статус' },
+              { key: 'prices', label: 'Ціни' },
+              { key: 'announcement', label: 'Оголошення' },
+              { key: 'readiness', label: 'Готовність' },
+              { key: 'contact', label: 'Контакти' },
+              { key: 'hours', label: 'Час роботи' },
+            ];
+            const kb = [];
+            for (let i = 0; i < topics.length; i += 2) {
+              kb.push([
+                { text: topics[i].label, callback_data: `/topic_${topics[i].key}` },
+                topics[i + 1] ? { text: topics[i + 1].label, callback_data: `/topic_${topics[i + 1].key}` } : { text: ' ', callback_data: '/noop' },
+              ]);
+            }
+            await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+            await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: 'Налаштування розсилок — оберіть теми, на які хочете підписатися або відписатися:', reply_markup: { inline_keyboard: kb } });
+            continue;
+          }
+
+          if (data && data.startsWith('/topic_')) {
+            const topic = data.replace('/topic_', '');
+            const chat = cb.from?.id || cb.message?.chat?.id;
+            if (!state.subscribers) state.subscribers = [];
+            let subscriber = state.subscribers.find((s) => String(s.chat_id) === String(chat));
+            if (!subscriber) {
+              subscriber = { chat_id: chat, name: cb.from?.username || cb.from?.first_name, topics: [] };
+              state.subscribers.push(subscriber);
+            }
+            subscriber.topics = subscriber.topics || [];
+            const idx = subscriber.topics.indexOf(topic);
+            if (idx === -1) {
+              subscriber.topics.push(topic);
+              await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: `Підписано на ${topic}`, show_alert: false });
+            } else {
+              subscriber.topics.splice(idx, 1);
+              await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: `Відписано від ${topic}`, show_alert: false });
+            }
+            saveState();
+            renderSubscribers();
+            continue;
+          }
+
+          // default acknowledge
           await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: `Обрано: ${data}`, show_alert: false });
           // send response message
           const respText = generateTelegramResponse(data);
@@ -949,12 +999,19 @@ async function pollTelegramOnce() {
           renderSubscribers();
         }
 
-        // build inline keyboard from botButtons
-        const keyboard = (state.botButtons || []).map((b) => [{ text: b.label, callback_data: b.command }]);
+        // build inline keyboard from botButtons in 3 columns
+        const buttons = (state.botButtons || []).map((b) => ({ text: b.label, callback_data: b.command }));
+        const keyboard = [];
+        for (let i = 0; i < buttons.length; i += 3) {
+          keyboard.push(buttons.slice(i, i + 3).map((btn) => ({ text: btn.text, callback_data: btn.callback_data })));
+        }
+        // add separate settings button as its own centered row
+        keyboard.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
         try {
           await telegramApi('sendMessage', {
             chat_id: chatId,
-            text: '👋 Привіт! Я бот АРС — оберіть одну з опцій або підпишіться на розсилки:',
+            text: '<b>👋 Вітаємо на АРС!</b>\n\nЯ допоможу дізнатися актуальний стан, ціни та отримувати розсилки.\nОберіть опцію нижче або натисніть «⚙️ Налаштування», щоб керувати підписками.',
+            parse_mode: 'HTML',
             reply_markup: { inline_keyboard: keyboard },
           });
           console.log('Sent greeting with keyboard to', chatId);

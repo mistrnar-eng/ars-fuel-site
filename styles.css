@@ -537,6 +537,23 @@ body.theme-sunrise {
   margin-top: 22px;
 }
 
+/* Admin bot settings grid for clearer layout */
+#admin-bot-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+#admin-bot-settings > div, #admin-bot-settings > h4, #admin-bot-settings > h5 {
+  grid-column: 1 / -1;
+}
+
+#admin-bot-settings .small-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .role-switch {
   display: flex;
   flex-wrap: wrap;
