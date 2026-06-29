@@ -226,8 +226,9 @@ img {
   gap: 14px;
 }
 
-.bot-button-manager,
-.user-management {
+.section-visibility {
+  display: grid;
+  gap: 10px;
   margin-top: 20px;
   padding: 14px;
   background: rgba(255, 255, 255, 0.04);
@@ -235,8 +236,22 @@ img {
   border-radius: 18px;
 }
 
+.section-visibility label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.section-visibility input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
 .bot-button-manager h4,
 .user-management h4,
+.section-visibility h4,
 .staff-management h5,
 .online-users h5 {
   margin-top: 0;

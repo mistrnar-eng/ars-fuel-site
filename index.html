@@ -30,10 +30,10 @@
       </a>
       <div class="topbar-right">
         <nav class="topnav">
-          <a id="nav-status" href="#status">Статус</a>
-          <a id="nav-prices" href="#prices">Ціни</a>
-          <a id="nav-telegram" href="#telegram">Telegram</a>
-          <a id="nav-admin" href="#admin">Управління</a>
+          <a id="nav-status" href="#status" data-i18n="navStatus">Статус</a>
+          <a id="nav-prices" href="#prices" data-i18n="navPrices">Ціни</a>
+          <a id="nav-telegram" href="#telegram" data-i18n="navTelegram">Telegram</a>
+          <a id="nav-admin" href="#admin" data-i18n="navAdmin">Управління</a>
           <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
         </nav>
         <div class="language-selector" id="language-selector">
@@ -47,15 +47,15 @@
     <main id="home" class="hero-shell">
       <section class="hero-card">
         <div class="hero-copy">
-          <p class="eyebrow">Преміальна заправка для дороги й бізнесу</p>
-          <h1>Швидка заправка, чиста сервісна зона та прозорий режим роботи.</h1>
-          <p class="hero-text">
+          <p class="eyebrow" data-i18n="heroEyebrow">Преміальна заправка для дороги й бізнесу</p>
+          <h1 data-i18n="heroHeading">Швидка заправка, чиста сервісна зона та прозорий режим роботи.</h1>
+          <p class="hero-text" data-i18n="heroText">
             Сайт АРС дає змогу бачити актуальний стан роботи, цінники, повідомлення для всіх
             та персоналу, а також швидко змінювати параметри через адміністративну панель.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#status">Переглянути статус</a>
-            <a class="btn btn-secondary" href="#admin">Відкрити панель</a>
+            <a class="btn btn-primary" href="#status" data-i18n="heroBtnStatus">Переглянути статус</a>
+            <a class="btn btn-secondary" href="#admin" data-i18n="heroBtnAdmin">Відкрити панель</a>
           </div>
           <div class="hero-badges">
             <span>24/7</span>
@@ -257,8 +257,8 @@
 
         <div class="telegram-test">
           <h4>📨 Тестова Розсилка</h4>
-          <input type="text" id="test-chat-id" placeholder="Введіть Telegram Chat ID" />
-          <textarea id="test-message" placeholder="Введіть текст повідомлення" rows="3"></textarea>
+          <input type="text" id="test-chat-id" placeholder="Введіть Telegram Chat ID" data-i18n-placeholder="chatIdPlaceholder" />
+          <textarea id="test-message" placeholder="Введіть текст повідомлення" rows="3" data-i18n-placeholder="messagePlaceholder"></textarea>
           <button class="btn btn-primary" id="send-test-message-btn" type="button">Надіслати Тестове Повідомлення</button>
           <p id="test-message-status" class="muted"></p>
         </div>
@@ -368,6 +368,16 @@
               </select>
             </label>
 
+            <div class="section-visibility">
+              <h4 data-i18n="sectionVisibilityHeading">Видимі колонки</h4>
+              <label><input class="section-toggle" type="checkbox" data-section="status" /> <span data-i18n="sectionStatus">Стан</span></label>
+              <label><input class="section-toggle" type="checkbox" data-section="prices" /> <span data-i18n="sectionPrices">Ціни</span></label>
+              <label><input class="section-toggle" type="checkbox" data-section="payments" /> <span data-i18n="sectionPayments">Оплата</span></label>
+              <label><input class="section-toggle" type="checkbox" data-section="media" /> <span data-i18n="sectionMedia">Медіа</span></label>
+              <label><input class="section-toggle" type="checkbox" data-section="telegram" /> <span data-i18n="sectionTelegram">Telegram</span></label>
+              <label><input class="section-toggle" type="checkbox" data-section="staffPanel" /> <span data-i18n="sectionStaffPanel">Повідомлення персоналу</span></label>
+            </div>
+
             <div class="bot-button-manager">
               <h4>Кнопки Telegram бота</h4>
               <div id="bot-button-list"></div>
@@ -395,8 +405,8 @@
               </div>
             </div>
 
-            <button class="btn btn-secondary" id="download-bot-config-btn" type="button">Завантажити конфігурацію бота</button>
-            <button class="btn btn-primary" id="save-btn" type="button">Зберегти зміни</button>
+            <button class="btn btn-secondary" id="download-bot-config-btn" type="button" data-i18n="downloadButton">Завантажити конфігурацію бота</button>
+            <button class="btn btn-primary" id="save-btn" type="button" data-i18n="saveButton">Зберегти зміни</button>
             <button class="btn btn-secondary" id="logout-btn" type="button">Вийти</button>
           </div>
         </div>
@@ -406,16 +416,16 @@
       <div id="login-modal" class="modal" hidden>
         <div class="modal-content">
           <button class="modal-close" id="modal-close-btn" type="button">✕</button>
-          <h2>Вхід до системи</h2>
+          <h2 data-i18n="loginModalTitle">Вхід до системи</h2>
           <label>
             <span>Логін</span>
-            <input id="modal-login-input" type="text" placeholder="Введіть логін" />
+            <input id="modal-login-input" type="text" placeholder="Введіть логін" data-i18n-placeholder="loginPlaceholder" />
           </label>
           <label>
             <span>Пароль</span>
-            <input id="modal-password-input" type="password" placeholder="Введіть пароль" />
+            <input id="modal-password-input" type="password" placeholder="Введіть пароль" data-i18n-placeholder="passwordPlaceholder" />
           </label>
-          <button class="btn btn-primary" id="modal-login-btn" type="button">Увійти</button>
+          <button class="btn btn-primary" id="modal-login-btn" type="button" data-i18n="loginSubmit">Увійти</button>
           <p id="modal-error" class="modal-error" style="display: none; color: var(--danger);"></p>
         </div>
       </div>

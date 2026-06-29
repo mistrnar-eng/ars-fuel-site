@@ -36,6 +36,15 @@ const defaultState = {
     { label: 'Контакти', command: '/contact' },
     { label: 'Готовність', command: '/readiness' },
   ],
+  visibleSections: {
+    status: true,
+    prices: true,
+    payments: true,
+    media: true,
+    telegram: true,
+    telegramCommands: true,
+    staffPanel: true,
+  },
   adminAccount: { username: 'admin', password: '0000' },
   staffAccounts: [{ username: 'sub', password: '1111' }],
   onlineUsers: [
@@ -62,6 +71,35 @@ const translations = {
     downloadBotConfig: 'Завантажити конфігурацію бота',
     savedMessage: 'Зміни збережено',
     syncedBot: 'Бот синхронізовано',
+    navStatus: 'Статус',
+    navPrices: 'Ціни',
+    navTelegram: 'Telegram',
+    navAdmin: 'Управління',
+    loginButton: 'Увійти',
+    profileButton: 'Профіль',
+    logoutLinkButton: 'Вийти',
+    heroEyebrow: 'Преміальна заправка для дороги й бізнесу',
+    heroHeading: 'Швидка заправка, чиста сервісна зона та прозорий режим роботи.',
+    heroText: 'Сайт АРС дає змогу бачити актуальний стан роботи, цінники, повідомлення для всіх та персоналу, а також швидко змінювати параметри через адміністративну панель.',
+    heroBtnStatus: 'Переглянути статус',
+    heroBtnAdmin: 'Відкрити панель',
+    loginModalTitle: 'Вхід до системи',
+    loginPlaceholder: 'Введіть логін',
+    passwordPlaceholder: 'Введіть пароль',
+    loginSubmit: 'Увійти',
+    saveButton: 'Зберегти зміни',
+    downloadButton: 'Завантажити конфігурацію бота',
+    addButtonLabel: 'Додати кнопку',
+    addStaffBtn: 'Додати співробітника',
+    chatIdPlaceholder: 'Введіть Telegram Chat ID',
+    messagePlaceholder: 'Введіть текст повідомлення',
+    sectionVisibilityHeading: 'Видимі колонки',
+    sectionStatus: 'Стан',
+    sectionPrices: 'Ціни',
+    sectionPayments: 'Оплата',
+    sectionMedia: 'Медіа',
+    sectionTelegram: 'Telegram',
+    sectionStaffPanel: 'Повідомлення персоналу',
   },
   en: {
     telegramCommandsEyebrow: '🤖 Telegram Bot - Commands',
@@ -79,6 +117,35 @@ const translations = {
     downloadBotConfig: 'Download bot config',
     savedMessage: 'Changes saved',
     syncedBot: 'Bot synced',
+    navStatus: 'Status',
+    navPrices: 'Prices',
+    navTelegram: 'Telegram',
+    navAdmin: 'Admin',
+    loginButton: 'Login',
+    profileButton: 'Profile',
+    logoutLinkButton: 'Logout',
+    heroEyebrow: 'Premium refueling for road and business',
+    heroHeading: 'Fast refueling, clean service area, and transparent operation.',
+    heroText: 'The ARS site shows current operating status, prices, announcements for everyone and staff, and allows fast changes through the admin panel.',
+    heroBtnStatus: 'View status',
+    heroBtnAdmin: 'Open dashboard',
+    loginModalTitle: 'System login',
+    loginPlaceholder: 'Enter login',
+    passwordPlaceholder: 'Enter password',
+    loginSubmit: 'Login',
+    saveButton: 'Save changes',
+    downloadButton: 'Download bot config',
+    addButtonLabel: 'Add button',
+    addStaffBtn: 'Add staff',
+    chatIdPlaceholder: 'Enter Telegram Chat ID',
+    messagePlaceholder: 'Enter message text',
+    sectionVisibilityHeading: 'Visible sections',
+    sectionStatus: 'Status',
+    sectionPrices: 'Prices',
+    sectionPayments: 'Payments',
+    sectionMedia: 'Media',
+    sectionTelegram: 'Telegram',
+    sectionStaffPanel: 'Staff messages',
   },
   de: {
     telegramCommandsEyebrow: '🤖 Telegram-Bot - Befehle',
@@ -96,6 +163,35 @@ const translations = {
     downloadBotConfig: 'Bot-Konfiguration herunterladen',
     savedMessage: 'Änderungen gespeichert',
     syncedBot: 'Bot synchronisiert',
+    navStatus: 'Status',
+    navPrices: 'Preise',
+    navTelegram: 'Telegram',
+    navAdmin: 'Verwaltung',
+    loginButton: 'Anmelden',
+    profileButton: 'Profil',
+    logoutLinkButton: 'Abmelden',
+    heroEyebrow: 'Premium-Tanken für Straße und Geschäft',
+    heroHeading: 'Schnelles Tanken, saubere Servicezone und transparenter Betrieb.',
+    heroText: 'Die ARS-Seite zeigt den aktuellen Betriebsstatus, Preise, Ankündigungen für alle und Personal und ermöglicht schnelle Änderungen über das Admin-Panel.',
+    heroBtnStatus: 'Status ansehen',
+    heroBtnAdmin: 'Dashboard öffnen',
+    loginModalTitle: 'Systemanmeldung',
+    loginPlaceholder: 'Login eingeben',
+    passwordPlaceholder: 'Passwort eingeben',
+    loginSubmit: 'Anmelden',
+    saveButton: 'Änderungen speichern',
+    downloadButton: 'Bot-Konfiguration herunterladen',
+    addButtonLabel: 'Taste hinzufügen',
+    addStaffBtn: 'Mitarbeiter hinzufügen',
+    chatIdPlaceholder: 'Telegram Chat ID eingeben',
+    messagePlaceholder: 'Nachrichtentext eingeben',
+    sectionVisibilityHeading: 'Sichtbare Bereiche',
+    sectionStatus: 'Status',
+    sectionPrices: 'Preise',
+    sectionPayments: 'Zahlungen',
+    sectionMedia: 'Medien',
+    sectionTelegram: 'Telegram',
+    sectionStaffPanel: 'Personalnachrichten',
   },
 };
 
@@ -114,6 +210,7 @@ function loadState() {
       fines: parsed.fines || defaultState.fines,
       media: parsed.media || defaultState.media,
       botButtons: parsed.botButtons || defaultState.botButtons,
+      visibleSections: { ...defaultState.visibleSections, ...(parsed.visibleSections || {}) },
       adminAccount: parsed.adminAccount || defaultState.adminAccount,
       staffAccounts: parsed.staffAccounts || defaultState.staffAccounts,
       onlineUsers: parsed.onlineUsers || defaultState.onlineUsers,
@@ -191,6 +288,7 @@ const commandsGrid = document.getElementById('commands-grid');
 const additionalPhonesContainer = document.getElementById('additional-phones-container');
 const brandName = document.getElementById('brand-name');
 const languageButtons = document.querySelectorAll('.lang-button');
+const sectionToggleInputs = document.querySelectorAll('.section-toggle');
 
 // Info display elements
 const staffPanel = document.getElementById('staff-panel');
@@ -237,6 +335,20 @@ function translatePage() {
     const key = element.getAttribute('data-i18n');
     if (key) {
       element.textContent = t(key);
+    }
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+    const key = element.getAttribute('data-i18n-placeholder');
+    if (key) {
+      element.placeholder = t(key);
+    }
+  });
+
+  document.querySelectorAll('[data-i18n-title]').forEach((element) => {
+    const key = element.getAttribute('data-i18n-title');
+    if (key) {
+      element.title = t(key);
     }
   });
 }
@@ -321,8 +433,12 @@ function renderBotButtons() {
       <h4>${button.label}</h4>
       <code>${button.command}</code>
       <p>Натисніть для попереднього перегляду</p>
-      <button class="btn btn-sm" onclick="simulateBotCommand('${button.command}')">Тест</button>
     `;
+    const testButton = document.createElement('button');
+    testButton.className = 'btn btn-sm';
+    testButton.textContent = 'Тест';
+    testButton.addEventListener('click', () => simulateBotCommand(button.command));
+    card.appendChild(testButton);
     commandsGrid.appendChild(card);
 
     const row = document.createElement('div');
@@ -412,13 +528,53 @@ function render() {
   
   currentUserDisplay.textContent = isLoggedIn ? `Автоматизовано як: ${roleText}` : 'Ви не авторизовані';
   logoutLinkBtn.style.display = isLoggedIn ? 'inline-block' : 'none';
-  loginModalBtn.textContent = isLoggedIn ? 'Профіль' : 'Увійти';
+  logoutLinkBtn.textContent = t('logoutLinkButton');
+  loginModalBtn.textContent = isLoggedIn ? t('profileButton') : t('loginButton');
 
   // Admin panel visibility
   adminPanel.hidden = !isAdmin;
-  staffPanel.hidden = !isStaff;
+  staffPanel.hidden = !isStaff || !state.visibleSections.staffPanel;
 
-  // Update station info
+  // Section visibility toggles and nav links
+  const sectionMap = {
+    status: document.getElementById('status'),
+    prices: document.getElementById('prices'),
+    payments: document.getElementById('payments'),
+    media: document.getElementById('media'),
+    telegram: document.getElementById('telegram'),
+    telegramCommands: document.getElementById('telegram-commands'),
+  };
+
+  Object.entries(sectionMap).forEach(([key, section]) => {
+    if (!section) return;
+    section.hidden = !state.visibleSections[key] || (key.startsWith('telegram') && !isStaff);
+  });
+
+  const navMap = {
+    'nav-status': state.visibleSections.status,
+    'nav-prices': state.visibleSections.prices,
+    'nav-telegram': (state.visibleSections.telegram || state.visibleSections.telegramCommands) && isStaff,
+    'nav-admin': isAdmin,
+  };
+
+  Object.entries(navMap).forEach(([id, visible]) => {
+    const navItem = document.getElementById(id);
+    if (navItem) navItem.hidden = !visible;
+  });
+
+  if (isAdmin) {
+    sectionToggleInputs.forEach((toggle) => {
+      const sectionName = toggle.dataset.section;
+      toggle.checked = Boolean(state.visibleSections[sectionName]);
+    });
+  }
+
+  languageButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.lang === state.language);
+  });
+
+  // Update brand and station info
+  if (brandName) brandName.textContent = state.stationName;
   document.getElementById('station-state-title').textContent = state.stationOpen ? 'Заправка відкрита' : 'Заправка зачинена';
   document.getElementById('station-state-pill').textContent = state.stationOpen ? 'Відкрито' : 'Зачинено';
   document.getElementById('station-state-pill').classList.toggle('status-pill-active', state.stationOpen);
@@ -721,11 +877,17 @@ downloadBotConfigBtn.addEventListener('click', downloadBotConfig);
 
 languageButtons.forEach((button) => {
   button.addEventListener('click', () => {
-    languageButtons.forEach((btn) => btn.classList.remove('active'));
-    button.classList.add('active');
     state.language = button.dataset.lang;
     saveState();
-    translatePage();
+    render();
+  });
+});
+
+sectionToggleInputs.forEach((toggle) => {
+  toggle.addEventListener('change', () => {
+    state.visibleSections[toggle.dataset.section] = toggle.checked;
+    saveState();
+    render();
   });
 });
 
