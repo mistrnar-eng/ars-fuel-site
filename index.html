@@ -35,6 +35,10 @@
           <a id="nav-telegram" href="#telegram" data-i18n="navTelegram">Telegram</a>
           <a id="nav-admin" href="#admin" data-i18n="navAdmin">Управління</a>
           <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
+          <select id="language-select" aria-label="Мова" style="margin-left:8px">
+            <option value="uk">Українська</option>
+            <option value="en">English</option>
+          </select>
         </nav>
       </div>
     </header>
@@ -235,6 +239,15 @@
             </p>
             <p id="current-user" style="color: var(--muted); font-size: 0.9rem;">Ви не авторизовані</p>
             <button class="btn btn-secondary" id="logout-link-btn" type="button" style="display: none;">Вийти</button>
+            <div class="quick-login" style="margin-top:10px">
+              <label style="display:block"><small>Швидкий вхід (налаштування)</small></label>
+              <input id="quick-username-input" type="text" placeholder="логін" style="margin-top:6px" />
+              <input id="quick-password-input" type="password" placeholder="пароль" style="margin-top:6px" />
+              <div style="margin-top:6px">
+                <button class="btn btn-primary" id="quick-login-btn" type="button">Увійти</button>
+                <button class="btn btn-secondary" id="quick-logout-btn" type="button">Вийти</button>
+              </div>
+            </div>
           </div>
 
           <div class="access-card" id="admin-panel" hidden>
@@ -342,6 +355,14 @@
               <h4 data-i18n="botButtonManagerHeading">Кнопки Telegram бота</h4>
               <div id="bot-button-list"></div>
               <button class="btn btn-secondary" id="add-bot-button-btn" type="button" data-i18n="addButtonLabel">Додати кнопку</button>
+            </div>
+
+            <div class="notification-settings" style="margin-top:12px">
+              <h4>Сповіщення</h4>
+              <label><input id="notif-telegram-greeting" type="checkbox" /> Привітання в Telegram</label>
+              <label><input id="notif-status-change" type="checkbox" /> Оновлення статусу</label>
+              <label><input id="notif-price-change" type="checkbox" /> Зміни цін</label>
+              <label><input id="notif-announcement" type="checkbox" /> Оголошення</label>
             </div>
 
             <div class="user-management">

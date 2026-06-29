@@ -51,6 +51,12 @@ const defaultState = {
     { name: 'Олена', role: 'staff' },
   ],
   language: 'uk',
+  notificationsEnabled: {
+    telegramGreeting: true,
+    statusChange: true,
+    priceChange: true,
+    announcement: true,
+  },
 };
 
 function loadState() {
@@ -72,7 +78,7 @@ function loadState() {
       adminAccount: parsed.adminAccount || defaultState.adminAccount,
       staffAccounts: parsed.staffAccounts || defaultState.staffAccounts,
       onlineUsers: parsed.onlineUsers || defaultState.onlineUsers,
-      role: 'guest',
+      role: parsed.role || defaultState.role,
     };
   } catch (error) {
     console.warn('Не вдалося завантажити стан з localStorage', error);
@@ -88,9 +94,27 @@ function formatPrice(value) {
   return `${Number(value).toFixed(2)} грн`;
 }
 
-// Simple translation stub (i18n removed) — returns key or a small lookup if needed
+// Simple translations (minimal)
+const translations = {
+  uk: {
+    loginButton: 'Увійти',
+    profileButton: 'Профіль',
+    logoutLinkButton: 'Вийти',
+    addPhonePrompt: 'Введіть номер телефону',
+    addStaffPrompt: 'Логін співробітника',
+  },
+  en: {
+    loginButton: 'Login',
+    profileButton: 'Profile',
+    logoutLinkButton: 'Logout',
+    addPhonePrompt: 'Enter phone number',
+    addStaffPrompt: 'Staff username',
+  },
+};
+
 function t(key) {
-  return key;
+  const lang = state?.language || 'uk';
+  return (translations[lang] && translations[lang][key]) || key;
 }
 
 let state = loadState();
@@ -150,6 +174,19 @@ const mediaGallery = document.getElementById('media-gallery');
 const additionalPhonesContainer = document.getElementById('additional-phones-container');
 const brandName = document.getElementById('brand-name');
 const sectionToggleInputs = document.querySelectorAll('.section-toggle');
+
+// New UI elements
+const languageSelect = document.getElementById('language-select');
+const quickUsernameInput = document.getElementById('quick-username-input');
+const quickPasswordInput = document.getElementById('quick-password-input');
+const quickLoginBtn = document.getElementById('quick-login-btn');
+const quickLogoutBtn = document.getElementById('quick-logout-btn');
+const notifTelegramGreeting = document.getElementById('notif-telegram-greeting');
+const notifStatusChange = document.getElementById('notif-status-change');
+const notifPriceChange = document.getElementById('notif-price-change');
+const notifAnnouncement = document.getElementById('notif-announcement');
+
+let realtimeIntervalId = null;
 
 // Info display elements
 const staffPanel = document.getElementById('staff-panel');
@@ -730,6 +767,65 @@ syncBotBtn.addEventListener('click', () => {
   }
 });
 
+// Quick login from settings
+if (quickLoginBtn) {
+  quickLoginBtn.addEventListener('click', () => {
+    const username = (quickUsernameInput?.value || '').trim();
+    const password = (quickPasswordInput?.value || '').trim();
+    if (!username || !password) return showToast('Введіть логін і пароль');
+    if (username === state.adminAccount.username && password === state.adminAccount.password) {
+      state.role = 'admin';
+      saveState();
+      render();
+      showToast('Увійшли як адміністратор');
+      return;
+    }
+    const staffMatch = state.staffAccounts.some((a) => a.username === username && a.password === password);
+    if (staffMatch) {
+      state.role = 'staff';
+      saveState();
+      render();
+      showToast('Увійшли як співробітник');
+      return;
+    }
+    showToast('Невірний логін або пароль');
+  });
+}
+
+if (quickLogoutBtn) quickLogoutBtn.addEventListener('click', () => { state.role = 'guest'; saveState(); render(); showToast('Ви вийшли'); });
+
+// Language selector
+if (languageSelect) {
+  languageSelect.value = state.language || 'uk';
+  languageSelect.addEventListener('change', () => {
+    state.language = languageSelect.value;
+    saveState();
+    render();
+  });
+}
+
+// Notification toggles
+if (notifTelegramGreeting) notifTelegramGreeting.checked = !!state.notificationsEnabled.telegramGreeting;
+if (notifStatusChange) notifStatusChange.checked = !!state.notificationsEnabled.statusChange;
+if (notifPriceChange) notifPriceChange.checked = !!state.notificationsEnabled.priceChange;
+if (notifAnnouncement) notifAnnouncement.checked = !!state.notificationsEnabled.announcement;
+
+if (notifTelegramGreeting) notifTelegramGreeting.addEventListener('change', () => { state.notificationsEnabled.telegramGreeting = notifTelegramGreeting.checked; saveState(); });
+if (notifStatusChange) notifStatusChange.addEventListener('change', () => { state.notificationsEnabled.statusChange = notifStatusChange.checked; saveState(); });
+if (notifPriceChange) notifPriceChange.addEventListener('change', () => { state.notificationsEnabled.priceChange = notifPriceChange.checked; saveState(); });
+if (notifAnnouncement) notifAnnouncement.addEventListener('change', () => { state.notificationsEnabled.announcement = notifAnnouncement.checked; saveState(); });
+
+// Real-time updates (render loop)
+function startRealtimeUpdates() {
+  stopRealtimeUpdates();
+  render();
+  realtimeIntervalId = setInterval(render, 2000);
+}
+
+function stopRealtimeUpdates() {
+  if (realtimeIntervalId) { clearInterval(realtimeIntervalId); realtimeIntervalId = null; }
+}
+
 // Telegram Bot Interface Event Listeners
 function appendMessage(who, text) {
   if (!telegramMessages) return;
@@ -761,6 +857,11 @@ if (navTelegram) {
 
 window.addEventListener('hashchange', () => {
   if (location.hash === '#telegram') startTelegramConversation();
+  else {
+    // remove last chat message when leaving section
+    if (telegramMessages && telegramMessages.lastChild) telegramMessages.removeChild(telegramMessages.lastChild);
+    if (telegramChat) telegramChat.hidden = true;
+  }
 });
 
 if (telegramSendBtn) {
@@ -806,13 +907,42 @@ async function pollTelegramOnce() {
 
     for (const update of resp.result || []) {
       telegramOffset = update.update_id + 1;
+
+      // handle callback button presses
+      if (update.callback_query) {
+        try {
+          const cb = update.callback_query;
+          const data = cb.data;
+          const fromId = cb.from?.id;
+          const msgChatId = cb.message?.chat?.id;
+          // acknowledge callback
+          await telegramApi('answerCallbackQuery', { callback_query_id: cb.id, text: `Обрано: ${data}`, show_alert: false });
+          // send response message
+          const respText = generateTelegramResponse(data);
+          await telegramApi('sendMessage', { chat_id: msgChatId || fromId, text: respText, parse_mode: 'HTML' });
+        } catch (e) {
+          console.warn('Callback handling failed', e);
+        }
+        continue;
+      }
+
       // handle direct /start message
       if (update.message && update.message.text && update.message.text.trim() === '/start') {
         const chatId = update.message.chat.id;
-        // send greeting
+        if (!state.notificationsEnabled.telegramGreeting) {
+          console.log('Telegram greeting disabled by settings');
+          continue;
+        }
+
+        // build inline keyboard from botButtons
+        const keyboard = (state.botButtons || []).map((b) => [{ text: b.label, callback_data: b.command }]);
         try {
-          await telegramApi('sendMessage', { chat_id: chatId, text: 'Привіт!' });
-          console.log('Sent greeting to', chatId);
+          await telegramApi('sendMessage', {
+            chat_id: chatId,
+            text: 'Привіт! Оберіть опцію:',
+            reply_markup: { inline_keyboard: keyboard },
+          });
+          console.log('Sent greeting with keyboard to', chatId);
         } catch (sendErr) {
           console.warn('Send message failed', sendErr);
         }
@@ -845,5 +975,6 @@ function stopTelegramPolling() {
 
 // start polling if token exists on load
 if (state.telegramToken) startTelegramPolling();
+// start UI and realtime loop
 render();
-setInterval(() => render(), 60000);
+startRealtimeUpdates();
