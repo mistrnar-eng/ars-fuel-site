@@ -123,11 +123,170 @@ img {
   color: var(--accent);
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.language-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lang-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.lang-button.active,
+.lang-button:hover {
+  border-color: var(--accent);
+  background: rgba(64, 214, 195, 0.16);
+}
+
 .hero-shell {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px 24px 56px;
 }
+
+.info-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.info-list-item,
+.phone-item,
+.bot-button-item,
+.staff-item,
+.online-user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.info-list-item span,
+.phone-item span,
+.bot-button-item span,
+.staff-item span,
+.online-user-item span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.media-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.media-card img,
+.media-card video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.media-card p {
+  margin: 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.inline-group {
+  display: grid;
+  gap: 14px;
+}
+
+.multi-row {
+  display: grid;
+  gap: 14px;
+}
+
+.bot-button-manager,
+.user-management {
+  margin-top: 20px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+
+.bot-button-manager h4,
+.user-management h4,
+.staff-management h5,
+.online-users h5 {
+  margin-top: 0;
+}
+
+.add-button {
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 8px;
+}
+
+.icon-btn:hover {
+  color: var(--accent);
+}
+
+body.theme-ocean {
+  background: radial-gradient(circle at top left, rgba(0, 193, 255, 0.16), transparent 28%),
+    linear-gradient(125deg, #041b2d, #0f2f4d 65%, #021422);
+}
+
+body.theme-sunrise {
+  background: radial-gradient(circle at top left, rgba(255, 172, 66, 0.16), transparent 28%),
+    linear-gradient(125deg, #2a1124, #6b2a58 65%, #2b1731);
+}
+
+@media (max-width: 900px) {
+  .topbar-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 
 .hero-card,
 .panel,

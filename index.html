@@ -24,17 +24,24 @@
       <a class="brand" href="#home">
         <span class="brand-mark">A</span>
         <span>
-          <strong>АРС</strong>
+          <strong id="brand-name">АРС</strong>
           <small>Заправка нового рівня</small>
         </span>
       </a>
-      <nav class="topnav">
-        <a href="#status">Статус</a>
-        <a href="#prices">Ціни</a>
-        <a href="#telegram">Telegram</a>
-        <a href="#admin">Управління</a>
-        <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
-      </nav>
+      <div class="topbar-right">
+        <nav class="topnav">
+          <a id="nav-status" href="#status">Статус</a>
+          <a id="nav-prices" href="#prices">Ціни</a>
+          <a id="nav-telegram" href="#telegram">Telegram</a>
+          <a id="nav-admin" href="#admin">Управління</a>
+          <button class="btn btn-secondary" id="login-modal-btn" type="button">Увійти</button>
+        </nav>
+        <div class="language-selector" id="language-selector">
+          <button class="lang-button active" data-lang="uk">🇺🇦 Укр</button>
+          <button class="lang-button" data-lang="en">🇬🇧 Eng</button>
+          <button class="lang-button" data-lang="de">🇩🇪 De</button>
+        </div>
+      </div>
     </header>
 
     <main id="home" class="hero-shell">
@@ -99,18 +106,19 @@
           </p>
           <div class="info-strip">
             <div>
-              <small>Рівень готовності</small>
+              <small data-i18n="readinessLabel">Рівень готовності</small>
               <strong id="readiness-level">98%</strong>
             </div>
             <div>
-              <small>Поточний час</small>
+              <small data-i18n="currentTimeLabel">Поточний час</small>
               <strong id="current-time">—</strong>
             </div>
             <div>
-              <small>Служба підтримки</small>
+              <small data-i18n="supportLabel">Служба підтримки</small>
               <strong id="phone-number">+38 (099) 123-45-67</strong>
             </div>
           </div>
+          <div class="info-strip extra-phones" id="additional-phones-container"></div>
         </article>
 
         <article class="panel panel-tall">
@@ -160,6 +168,39 @@
         </article>
       </section>
 
+      <section id="payments" class="panel-grid two-up">
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Оплата</p>
+              <h3>Методи оплати</h3>
+            </div>
+          </div>
+          <div id="payment-options-list" class="info-list"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Штрафи</p>
+              <h3>Правила і санкції</h3>
+            </div>
+          </div>
+          <div id="fine-list-display" class="info-list"></div>
+        </article>
+      </section>
+
+      <section id="media" class="panel-grid">
+        <article class="panel">
+          <div class="panel-head compact">
+            <div>
+              <p class="eyebrow">Медіа</p>
+              <h3>Фото та відео АРС</h3>
+            </div>
+          </div>
+          <div class="media-grid" id="media-gallery"></div>
+        </article>
+      </section>
+
       <section id="telegram" class="panel panel-telegram">
         <div class="panel-head compact">
           <div>
@@ -177,62 +218,20 @@
       <section id="telegram-commands" class="panel panel-telegram-commands">
         <div class="panel-head compact">
           <div>
-            <p class="eyebrow">🤖 Telegram Бот - Команди</p>
-            <h3>Управління через чат</h3>
+            <p class="eyebrow" data-i18n="telegramCommandsEyebrow">🤖 Telegram Бот - Команди</p>
+            <h3 data-i18n="telegramCommandsHeading">Управління через чат</h3>
           </div>
         </div>
 
         <div class="telegram-info">
           <div class="info-box">
-            <strong>📱 ID Бота:</strong>
+            <strong data-i18n="botIdLabel">📱 ID Бота:</strong>
             <code id="bot-id-display">Введіть токен спочатку</code>
           </div>
-          <button class="btn btn-secondary" id="copy-bot-id-btn" type="button">📋 Копіювати ID</button>
+          <button class="btn btn-secondary" id="copy-bot-id-btn" type="button" data-i18n="copyBotId">📋 Копіювати ID</button>
         </div>
 
-        <div class="commands-grid">
-          <div class="command-card">
-            <h4>📊 Статус Станції</h4>
-            <code>/status</code>
-            <p>Показує поточний статус заправки</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/status')">Тест</button>
-          </div>
-
-          <div class="command-card">
-            <h4>💰 Поточні Ціни</h4>
-            <code>/prices</code>
-            <p>Показує ціни на паливо</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/prices')">Тест</button>
-          </div>
-
-          <div class="command-card">
-            <h4>📢 Оголошення</h4>
-            <code>/announce</code>
-            <p>Показує важливі повідомлення</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/announce')">Тест</button>
-          </div>
-
-          <div class="command-card">
-            <h4>⏱️ Час роботи</h4>
-            <code>/hours</code>
-            <p>Показує час роботи</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/hours')">Тест</button>
-          </div>
-
-          <div class="command-card">
-            <h4>📞 Контакти</h4>
-            <code>/contact</code>
-            <p>Показує номер підтримки</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/contact')">Тест</button>
-          </div>
-
-          <div class="command-card">
-            <h4>⚡ Готовність</h4>
-            <code>/readiness</code>
-            <p>Рівень готовності станції</p>
-            <button class="btn btn-sm" onclick="simulateBotCommand('/readiness')">Тест</button>
-          </div>
-        </div>
+        <div id="commands-grid" class="commands-grid"></div>
 
         <div class="telegram-alerts">
           <h4>🔔 Автоматичні Оповіщення</h4>
@@ -286,9 +285,22 @@
           <div class="access-card" id="admin-panel" hidden>
             <h4>Панель адміністратора</h4>
             <label>
-              <span>Номер телефону служби підтримки</span>
+              <span>Назва заправки</span>
+              <input id="station-name-input" type="text" placeholder="АРС Заправка" />
+            </label>
+
+            <label>
+              <span>Основний номер телефону</span>
               <input id="phone-input" type="tel" placeholder="+38 (099) 123-45-67" />
             </label>
+
+            <div class="inline-group">
+              <label>
+                <span>Додаткові телефони</span>
+                <div id="phone-list"></div>
+                <button class="btn btn-secondary" id="add-phone-number-btn" type="button">Додати номер</button>
+              </label>
+            </div>
 
             <label>
               <span>Рівень готовності (%)</span>
@@ -330,22 +342,60 @@
               <input id="price-gas-input" type="number" step="0.01" />
             </label>
 
+            <div class="multi-row">
+              <label>
+                <span>Оплата</span>
+                <textarea id="payment-options-input" rows="3" placeholder="Наприклад: Готівка, картка, Apple Pay"></textarea>
+              </label>
+
+              <label>
+                <span>Штрафи</span>
+                <textarea id="fines-input" rows="3" placeholder="Наприклад: Штраф за куріння на АЗС - 100 грн"></textarea>
+              </label>
+            </div>
+
             <label>
-              <span>Токен Telegram бота</span>
-              <input id="telegram-token-input" type="text" placeholder="Введіть ваш токен бота" />
-              <small style="color: var(--muted);">Бот використовуватиме цей токен для надсилання повідомлень</small>
+              <span>Фото / відео (image|URL або video|URL кожен на новому рядку)</span>
+              <textarea id="media-input" rows="4" placeholder="image|https://...\nvideo|https://..."></textarea>
             </label>
 
             <label>
-              <span>Повідомлення для всіх</span>
-              <textarea id="all-message-input" rows="3"></textarea>
+              <span>Тема дизайну</span>
+              <select id="theme-select">
+                <option value="dark">Темна</option>
+                <option value="ocean">Океан</option>
+                <option value="sunrise">Світанок</option>
+              </select>
             </label>
 
-            <label>
-              <span>Повідомлення для співробітників</span>
-              <textarea id="staff-message-input" rows="3"></textarea>
-            </label>
+            <div class="bot-button-manager">
+              <h4>Кнопки Telegram бота</h4>
+              <div id="bot-button-list"></div>
+              <button class="btn btn-secondary" id="add-bot-button-btn" type="button">Додати кнопку</button>
+            </div>
 
+            <div class="user-management">
+              <h4>Керування обліковими записами</h4>
+              <label>
+                <span>Логін адміністратора</span>
+                <input id="admin-username-input" type="text" />
+              </label>
+              <label>
+                <span>Пароль адміністратора</span>
+                <input id="admin-password-input" type="password" />
+              </label>
+              <div class="staff-management">
+                <h5>Співробітники</h5>
+                <div id="staff-list"></div>
+                <button class="btn btn-secondary" id="add-staff-btn" type="button">Додати співробітника</button>
+              </div>
+              <div class="online-users">
+                <h5>Хто зараз на сайті</h5>
+                <div id="online-users-list"></div>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" id="download-bot-config-btn" type="button">Завантажити конфігурацію бота</button>
             <button class="btn btn-primary" id="save-btn" type="button">Зберегти зміни</button>
             <button class="btn btn-secondary" id="logout-btn" type="button">Вийти</button>
           </div>
@@ -357,13 +407,6 @@
         <div class="modal-content">
           <button class="modal-close" id="modal-close-btn" type="button">✕</button>
           <h2>Вхід до системи</h2>
-          <label>
-            <span>Роль</span>
-            <select id="modal-role-select">
-              <option value="staff">Співробітник</option>
-              <option value="admin">Адміністратор</option>
-            </select>
-          </label>
           <label>
             <span>Логін</span>
             <input id="modal-login-input" type="text" placeholder="Введіть логін" />
