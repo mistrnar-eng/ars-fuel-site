@@ -1,17 +1,4 @@
 {
-  "name": "ars-fuel-site-server",
-  "version": "1.0.0",
-  "description": "Static site + server-side Telegram bot polling",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "node-fetch": "^2.6.7"
-  }
-}
-{
   "name": "ars-fuel-site",
   "version": "1.0.0",
   "description": "Сучасна заправка АРС - система управління заправною станцією",
@@ -27,6 +14,10 @@
   ],
   "author": "АРС Заправка",
   "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  },
   "devDependencies": {
     "http-server": "^14.1.1"
   }
