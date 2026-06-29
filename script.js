@@ -1,5 +1,3 @@
-const STORAGE_KEY = 'ars-fuel-state';
-
 const defaultState = {
   role: 'guest',
   stationOpen: true,
@@ -60,34 +58,41 @@ const defaultState = {
 };
 
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return defaultState;
-    const parsed = JSON.parse(saved);
-    return {
-      ...defaultState,
-      ...parsed,
-      prices: { ...defaultState.prices, ...(parsed.prices || {}) },
-      messages: { ...defaultState.messages, ...(parsed.messages || {}) },
-      additionalPhones: parsed.additionalPhones || defaultState.additionalPhones,
-      paymentOptions: parsed.paymentOptions || defaultState.paymentOptions,
-      fines: parsed.fines || defaultState.fines,
-      media: parsed.media || defaultState.media,
-      botButtons: parsed.botButtons || defaultState.botButtons,
-      visibleSections: { ...defaultState.visibleSections, ...(parsed.visibleSections || {}) },
-      adminAccount: parsed.adminAccount || defaultState.adminAccount,
-      staffAccounts: parsed.staffAccounts || defaultState.staffAccounts,
-      onlineUsers: parsed.onlineUsers || defaultState.onlineUsers,
-      role: parsed.role || defaultState.role,
-    };
-  } catch (error) {
-    console.warn('Не вдалося завантажити стан з localStorage', error);
-    return defaultState;
-  }
+  return defaultState;
+}
+
+let serverStateSyncTimeout = null;
+function queueServerStateSync() {
+  if (serverStateSyncTimeout) clearTimeout(serverStateSyncTimeout);
+  serverStateSyncTimeout = setTimeout(syncStateToServer, 300);
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  queueServerStateSync();
+}
+
+async function syncStateToServer() {
+  serverStateSyncTimeout = null;
+  try {
+    const payload = {
+      name: state.stationName,
+      open: state.stationOpen,
+      reason: state.reason,
+      prices: state.prices,
+      messages: state.messages,
+      readiness: state.readinessLevel,
+      phone: state.phoneNumber,
+      hours: state.hours || '',
+      telegramToken: state.telegramToken || undefined,
+    };
+    await fetch('/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    console.warn('Unable to sync state to server', e);
+  }
 }
 
 function formatPrice(value) {
@@ -136,7 +141,6 @@ function applyServerState(serverState) {
   if (typeof st.readiness !== 'undefined') state.readinessLevel = st.readiness;
   if (st.phone) state.phoneNumber = st.phone;
   if (st.hours) state.hours = st.hours;
-  saveState();
 }
 
 async function fetchServerState() {
@@ -939,7 +943,8 @@ saveBtn.addEventListener('click', () => {
       messages: state.messages,
       readiness: state.readinessLevel,
       phone: state.phoneNumber,
-      hours: state.hours || ''
+      hours: state.hours || '',
+      telegramToken: state.telegramToken || undefined,
     };
     fetch('/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
   } catch (e) {}
@@ -1323,7 +1328,6 @@ function buildBroadcastText(topic) {
 
 async function broadcastToSubscribers(topic) {
   const text = buildBroadcastText(topic);
-  // try server-side broadcast if server is hosting the bot
   try {
     const res = await fetch('/broadcast', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic }) });
     if (res.ok) {
@@ -1331,23 +1335,9 @@ async function broadcastToSubscribers(topic) {
       return;
     }
   } catch (e) {
-    // server not available — fallback to client-side bot
+    console.warn('Server broadcast failed', e);
   }
-
-  const subs = state.subscribers || [];
-  if (!state.telegramToken) return showToast('Спочатку встановіть токен бота або розгорніть сервер');
-  // only send to subscribers who have this topic in their topics array
-  const targets = (subs || []).filter((s) => Array.isArray(s.topics) && s.topics.includes(topic));
-  if (!targets.length) return showToast('Немає підписників для цієї теми');
-  showToast(`Розсилка ${targets.length}…`);
-  for (const s of targets) {
-    try {
-      await telegramApi('sendMessage', { chat_id: s.chat_id, text });
-    } catch (e) {
-      console.warn('Broadcast failed for', s.chat_id, e);
-    }
-  }
-  showToast('Розсилка завершена');
+  showToast('Не вдалося відправити розсилку через сервер. Перевірте запущений сервер бота.');
 }
 
 // start polling if token exists on load
@@ -1355,7 +1345,6 @@ async function broadcastToSubscribers(topic) {
 (async function init() {
   await fetchServerState();
   connectWebSocket();
-  if (state.telegramToken) startTelegramPolling();
   render();
   startRealtimeUpdates();
   startServerStatePolling();

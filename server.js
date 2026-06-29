@@ -34,14 +34,49 @@ function getStationState() {
   };
 }
 
+function generateTelegramResponseForCommand(command) {
+  const st = getStationState();
+  if (command === 'status') {
+    return `<b>Стан АРС:</b> ${st.open ? '✅ Відкрито' : '🔴 Зачинено'}\n${st.reason || ''}\nРівень готовності: ${st.readiness || 0}%`;
+  }
+  if (command === 'prices') {
+    return `<b>Ціни:</b> А95 ${Number(st.prices.a95).toFixed(2)} грн/л, ДП ${Number(st.prices.diesel).toFixed(2)} грн/л, Газ ${Number(st.prices.gas).toFixed(2)} грн/м³`;
+  }
+  if (command === 'announcement') {
+    return `<b>Оголошення:</b> ${st.messages.all || ''}`;
+  }
+  if (command === 'readiness') {
+    return `<b>Рівень готовності:</b> ${st.readiness || 0}%`;
+  }
+  if (command === 'contact') {
+    return `<b>Контакти:</b> ${st.phone || ''}`;
+  }
+  if (command === 'hours') {
+    return `<b>Години роботи:</b> ${st.hours || 'Пн-Нд 24/7'}`;
+  }
+  return `Оновлення АРС: статус ${st.open ? 'Відкрито' : 'Зачинено'}, ціни А95 ${Number(st.prices.a95).toFixed(2)} грн/л.`;
+}
+
 const state = loadState();
 state.station = state.station || getStationState();
 state.subscribers = state.subscribers || [];
 
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || (fs.existsSync(path.join(__dirname, 'telegram_token.txt')) ? fs.readFileSync(path.join(__dirname, 'telegram_token.txt'),'utf8').trim() : null);
+const TOKEN_FILE = path.join(__dirname, 'telegram_token.txt');
+let TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || (fs.existsSync(TOKEN_FILE) ? fs.readFileSync(TOKEN_FILE,'utf8').trim() : null);
 if (!TELEGRAM_TOKEN) console.warn('No TELEGRAM_TOKEN set; bot will not start until token provided as env or telegram_token.txt');
 
 const TELEGRAM_API = (method) => `https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`;
+
+function saveTelegramToken(token) {
+  try {
+    if (!token) return;
+    fs.writeFileSync(TOKEN_FILE, token, 'utf8');
+    TELEGRAM_TOKEN = token;
+    console.log('Telegram token updated on server');
+  } catch (e) {
+    console.warn('Unable to save Telegram token', e);
+  }
+}
 
 async function telegramApi(method, params = {}) {
   if (!TELEGRAM_TOKEN) throw new Error('No token');
@@ -136,26 +171,29 @@ async function handleUpdate(u) {
         return;
       }
 
+      if (data === '/back') {
+        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
+        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
+        // send greeting with keyboard exactly like /start
+        const sub = state.subscribers.find(s => String(s.chat_id) === String(chat));
+        const buttons = [
+          [{ text: 'Стан', callback_data: '/status' }, { text: 'Ціни', callback_data: '/prices' }, { text: 'Графік', callback_data: '/hours' }],
+        ];
+        buttons.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
+        if (sub && sub.isAdmin) {
+          buttons.push([{ text: '🔐 Адмін меню', callback_data: '/admin' }]);
+        }
+        const text = `<b>👋 Привіт!</b> Я бот АРС.`;
+        await telegramApi('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
+        return;
+      }
+
       // fallback for other callbacks: echo intent
       if (data) {
         try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
         await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
         const respText = generateTelegramResponseForCommand(data.replace('/',''));
         await telegramApi('sendMessage', { chat_id: chat, text: respText, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '⬅️ Назад', callback_data: '/back' }]] } });
-        return;
-      }
-
-      if (data === '/back') {
-        try { await telegramApi('deleteMessage', { chat_id: chat, message_id: cb.message.message_id }); } catch(e){}
-        await telegramApi('answerCallbackQuery', { callback_query_id: cb.id });
-        // send greeting with keyboard
-        const st = state.station || {};
-        const buttons = [
-          [{ text: 'Стан', callback_data: '/status' }, { text: 'Ціни', callback_data: '/prices' }, { text: 'Графік', callback_data: '/hours' }],
-        ];
-        buttons.push([{ text: '⚙️ Налаштування', callback_data: '/settings' }]);
-        const text = `<b>👋 Привіт!</b> Я бот АРС.`;
-        await telegramApi('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
         return;
       }
       
@@ -242,6 +280,9 @@ app.post('/state', (req,res)=>{
   const newStation = req.body || {};
   const oldStation = state.station || {};
   state.station = { ...oldStation, ...newStation };
+  if (newStation.telegramToken) {
+    saveTelegramToken(newStation.telegramToken);
+  }
   saveState(state);
 
   try {
