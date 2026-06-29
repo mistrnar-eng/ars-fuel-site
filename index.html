@@ -208,6 +208,14 @@
           Бот може повідомляти клієнтів і персонал про відкриття, закриття, зміну цін або оголошень.
           У цій демо-версії кнопка показує, як буде працювати інтеграція.
         </p>
+        <div id="telegram-connection-status" class="muted" style="margin-bottom:10px;">Статус бота: не підключено</div>
+        <div id="telegram-chat" class="telegram-chat" hidden>
+          <div id="telegram-messages" class="telegram-messages" aria-live="polite"></div>
+          <div class="telegram-input-row">
+            <input id="telegram-input" type="text" placeholder="Почніть розмову..." />
+            <button class="btn btn-primary" id="telegram-send-btn" type="button">Надіслати</button>
+          </div>
+        </div>
       </section>
 
 

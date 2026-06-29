@@ -156,6 +156,19 @@ const staffPanel = document.getElementById('staff-panel');
 const phoneDisplay = document.getElementById('phone-number');
 const readinessDisplay2 = document.getElementById('readiness-level');
 
+// Telegram chat UI elements (simple local simulation)
+const navTelegram = document.getElementById('nav-telegram');
+const telegramSection = document.getElementById('telegram');
+const telegramChat = document.getElementById('telegram-chat');
+const telegramMessages = document.getElementById('telegram-messages');
+const telegramInput = document.getElementById('telegram-input');
+const telegramSendBtn = document.getElementById('telegram-send-btn');
+const telegramConnectionStatus = document.getElementById('telegram-connection-status');
+
+// Polling state for Telegram API
+let telegramPollIntervalId = null;
+let telegramOffset = 0;
+
 // Telegram Bot Commands
 function getBotIdFromToken(token) {
   if (!token) return 'Не встановлено';
@@ -712,6 +725,47 @@ syncBotBtn.addEventListener('click', () => {
 });
 
 // Telegram Bot Interface Event Listeners
+function appendMessage(who, text) {
+  if (!telegramMessages) return;
+  const el = document.createElement('div');
+  el.className = `telegram-message ${who}`;
+  el.textContent = text;
+  telegramMessages.appendChild(el);
+  // scroll to bottom
+  telegramMessages.scrollTop = telegramMessages.scrollHeight;
+}
 
+function startTelegramConversation() {
+  if (!telegramChat) return;
+  // reveal chat area and focus input
+  telegramChat.hidden = false;
+  // send initial greeting
+  appendMessage('bot', 'Привіт!');
+  if (telegramInput) telegramInput.focus();
+}
+
+if (navTelegram) {
+  navTelegram.addEventListener('click', (e) => {
+    // ensure SPA-like navigation still works
+    e.preventDefault();
+    startTelegramConversation();
+    location.hash = '#telegram';
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#telegram') startTelegramConversation();
+});
+
+if (telegramSendBtn) {
+  telegramSendBtn.addEventListener('click', () => {
+    const text = telegramInput?.value?.trim();
+    if (!text) return;
+    appendMessage('user', text);
+    if (telegramInput) telegramInput.value = '';
+    // simple bot reply after short delay
+    setTimeout(() => appendMessage('bot', 'Привіт!'), 400);
+  });
+}
 render();
 setInterval(() => render(), 60000);
